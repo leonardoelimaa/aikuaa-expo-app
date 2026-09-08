@@ -1,0 +1,17 @@
+{
+  "name": "aikuaa-expo-app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Aikuaa attendance app monorepo",
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.5"
+  }
+}
