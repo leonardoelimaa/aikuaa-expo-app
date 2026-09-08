@@ -1,0 +1,1 @@
+export { ChatPlaceholder } from './ChatPlaceholder'
