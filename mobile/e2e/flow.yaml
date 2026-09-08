@@ -1,0 +1,4 @@
+appId: com.aikuaa.mobile
+---
+- launchApp
+- assertVisible: "Home"
