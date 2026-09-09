@@ -1,5 +1,5 @@
 import { resolveEventContext, DEMO_EVENT } from './resolveEvent'
-import { EventContextInput } from './AppContext'
+import { EventContextInput } from './resolveEvent'
 
 describe('resolveEventContext', () => {
   it('returns the preconfigured demo event when no input is provided', () => {

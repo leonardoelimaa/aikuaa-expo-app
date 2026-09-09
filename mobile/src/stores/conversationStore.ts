@@ -1,5 +1,8 @@
 import { Conversation } from '../services/types'
 
+// NOTE: Module-level mutable state below is temporary demo infrastructure
+// and will be replaced by persistent stores in a later PR.
+
 let conversations: Conversation[] = []
 
 export const conversationStore = {

@@ -1,6 +1,12 @@
-import { AppContext, EventContextInput } from './AppContext'
+import { AppContext, EventAppContext } from '../types/app'
 
-export const DEMO_EVENT: AppContext = {
+export interface EventContextInput {
+  eventId: string
+  tenantId?: string
+  companyId?: string
+}
+
+export const DEMO_EVENT: Readonly<EventAppContext> = {
   mode: 'event',
   eventId: 'aikuaa-demo-event',
   tenantId: 'aikuaa-demo-tenant',

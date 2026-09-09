@@ -38,8 +38,3 @@ export function getServices(): Services {
 export function resetServices(): void {
   services = createMockServices()
 }
-
-/**
- * Alias for hook-like consumption. Returns the same singleton registry.
- */
-export const useServices = getServices

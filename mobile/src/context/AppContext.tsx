@@ -1,14 +1,8 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { AppContext as AppContextType } from '../types/app'
-import { resolveEventContext } from './resolveEvent'
+import { resolveEventContext, EventContextInput } from './resolveEvent'
 
 export type AppContext = AppContextType
-
-export interface EventContextInput {
-  eventId: string
-  tenantId?: string
-  companyId?: string
-}
 
 interface AppContextState {
   context: AppContextType

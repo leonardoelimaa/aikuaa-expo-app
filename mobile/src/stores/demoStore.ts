@@ -10,6 +10,7 @@ export const demoEventContext: EventAppContext = {
   mode: 'event',
   tenantId: DEMO_TENANT_ID,
   eventId: DEMO_EVENT_ID,
+  companyId: 'aikuaa-demo-company',
 }
 
 export async function resetDemoState(): Promise<EventAppContext> {
