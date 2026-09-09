@@ -1,6 +1,6 @@
 import React from 'react'
-import { ChatPlaceholder } from '@/components/chat'
+import { ChatScreen } from '@/features/chat/components'
 
-export default function ChatScreen() {
-  return <ChatPlaceholder />
+export default function ChatRoute() {
+  return <ChatScreen />
 }
