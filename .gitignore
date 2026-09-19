@@ -105,10 +105,8 @@ lerna-debug.log*
 /face_service/data/*.db-shm
 
 
-# OpenCode local configuration and generated artifacts
-.opencode/
+# Legacy OpenCode local configuration
 opencode.json
-AGENTS.md
 
 # Runtime data
 pids
@@ -122,3 +120,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /generated/prisma
 
 .agents/
+.codex/
+AGENTS.md
