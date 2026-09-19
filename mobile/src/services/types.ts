@@ -107,5 +107,10 @@ export interface SearchOptions {
 }
 
 export interface AnalyticsService {
+  /**
+   * Alias for trackEvent. Preferred shorthand for analytics instrumentation.
+   */
+  track(name: string, properties?: Record<string, unknown>): Promise<void>
+
   trackEvent(name: string, properties?: Record<string, unknown>): Promise<void>
 }

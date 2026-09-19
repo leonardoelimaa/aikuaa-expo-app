@@ -17,6 +17,24 @@ export function createMockAIService(): AIService {
         return
       }
 
+      if (normalized.includes('timeout')) {
+        yield {
+          type: 'error',
+          code: 'TIMEOUT',
+          message: 'El servidor tardó demasiado en responder.',
+        }
+        return
+      }
+
+      if (normalized.includes('backend') || normalized.includes('servidor')) {
+        yield {
+          type: 'error',
+          code: 'BACKEND_DOWN',
+          message: 'No se pudo conectar con el servidor.',
+        }
+        return
+      }
+
       if (normalized.includes('error')) {
         yield { type: 'error', code: 'AI_ERROR', message: 'Error simulado del asistente.' }
         return

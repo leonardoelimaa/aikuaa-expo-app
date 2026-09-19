@@ -9,7 +9,7 @@ import { createMockAIService } from './ai.service'
 import { createMockConversationService } from './conversation.service'
 import { createMockEventService } from './event.service'
 import { createMockCompanyService } from './company.service'
-import { createMockAnalyticsService } from './analytics.service'
+import { createMockAnalyticsService, clearRecordedEvents } from './analytics.service'
 
 export interface Services {
   ai: AIService
@@ -37,4 +37,5 @@ export function getServices(): Services {
 
 export function resetServices(): void {
   services = createMockServices()
+  clearRecordedEvents()
 }
