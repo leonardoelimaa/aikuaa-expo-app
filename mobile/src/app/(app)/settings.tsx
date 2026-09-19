@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, type ViewStyle, type TextStyle } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StyleSheet } from 'react-native-unistyles'
+import { DemoResetButton } from '@/dev/demo/DemoResetButton'
 
 export default function SettingsScreen() {
   return (
@@ -9,6 +10,7 @@ export default function SettingsScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>Ajustes</Text>
         <Text style={styles.subtitle}>Próximamente.</Text>
+        <DemoResetButton />
       </View>
     </SafeAreaView>
   )

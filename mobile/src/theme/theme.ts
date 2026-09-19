@@ -1,6 +1,6 @@
 import { breakpoints } from './tokens/breakpoints'
 import { durations, easings } from './tokens/animations'
-import { fontSizes, fontStacks, fontWeights } from './tokens/typography'
+import { fontSizes, fontStacks, fontWeights, lineHeights } from './tokens/typography'
 import { radii } from './tokens/radii'
 import { rawColors } from './tokens/colors'
 import { shadows } from './tokens/shadows'
@@ -52,6 +52,7 @@ export const theme = {
   fonts,
   fontSizes,
   fontWeights,
+  lineHeights,
   spacing,
   radii,
   shadows: resolvedShadows,

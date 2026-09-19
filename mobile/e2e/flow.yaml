@@ -1,4 +1,20 @@
 appId: com.aikuaa.mobile
 ---
+# Main demo flow — end-to-end smoke test for the Aikuaa mobile app.
+# This flow exercises the offline demo path: welcome → event context → chat →
+# send a suggestion → see the deterministic mock response → reset demo state
+# from the operator action in Settings.
+#
+# Note: source/tool transparency components exist in the codebase but are not
+# yet wired to every mock response, so this flow asserts the visible mock
+# response text instead of the transparency drawer.
 - launchApp
-- assertVisible: "Home"
+- assertVisible: "Entrar al evento demo"
+- tapOn: "Entrar al evento demo"
+- assertVisible: "Chat"
+- tapOn: "Conoce el evento"
+- assertVisible: "Esta es una respuesta determinista de demostración."
+- tapOn: "Ajustes"
+- assertVisible: "Restablecer demo"
+- tapOn: "Restablecer demo"
+- assertVisible: "Demo restablecida"

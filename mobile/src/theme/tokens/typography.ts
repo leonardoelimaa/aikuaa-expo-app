@@ -29,3 +29,13 @@ export const fontSizes = {
 } as const
 
 export type FontSizes = typeof fontSizes
+
+export const lineHeights = {
+  16: 16,
+  18: 18,
+  20: 20,
+  22: 22,
+  24: 24,
+} as const
+
+export type LineHeights = typeof lineHeights

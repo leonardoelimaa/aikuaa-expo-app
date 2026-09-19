@@ -8,12 +8,14 @@ export const StyleSheet = {
   ) => callback(theme),
 }
 
-export const useUnistyles = () => ({
+export const useUnistyles = jest.fn(() => ({
   theme,
+  breakpoint: 'sm',
   runtime: {
     themeName: 'light',
+    breakpoint: 'sm',
   },
-})
+}))
 
 export const UnistylesRuntime = {
   setTheme: jest.fn(),
