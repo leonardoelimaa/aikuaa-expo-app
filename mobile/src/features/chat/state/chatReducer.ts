@@ -60,6 +60,16 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         status: 'idle',
       }
 
+    case 'retryLastMessage':
+      return {
+        ...state,
+        streamingMessageId: `stream_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        streamingContent: '',
+        isThinking: false,
+        error: null,
+        status: 'streaming',
+      }
+
     default:
       return state
   }

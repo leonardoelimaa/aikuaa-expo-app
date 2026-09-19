@@ -53,4 +53,26 @@ describe('ChatComposer', () => {
 
     expect(handleSend).toHaveBeenCalledWith('Hola')
   })
+
+  it('exposes touch targets of at least 44 dp', async () => {
+    await render(<ChatComposer value="Hola" onChangeText={jest.fn()} onSend={jest.fn()} />)
+
+    const input = screen.getByTestId('chat-composer-input')
+    const sendButton = screen.getByTestId('chat-composer-send')
+
+    const flattenStyle = (style: unknown): Record<string, unknown> =>
+      [style]
+        .flat(Infinity)
+        .reduce<Record<string, unknown>>(
+          (acc, s) => (s ? { ...acc, ...(s as Record<string, unknown>) } : acc),
+          {},
+        )
+
+    const inputStyle = flattenStyle(input.props.style)
+    const sendStyle = flattenStyle(sendButton.props.style)
+
+    expect(Number(inputStyle.minHeight)).toBeGreaterThanOrEqual(44)
+    expect(Number(sendStyle.width)).toBeGreaterThanOrEqual(44)
+    expect(Number(sendStyle.height)).toBeGreaterThanOrEqual(44)
+  })
 })

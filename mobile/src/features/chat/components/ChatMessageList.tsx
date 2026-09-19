@@ -1,9 +1,11 @@
-import React, { useRef, useEffect } from 'react'
-import { FlatList, View, Text, type ViewStyle, type TextStyle } from 'react-native'
+import React, { useRef, useEffect, useCallback } from 'react'
+import { View, type ViewStyle } from 'react-native'
+import { FlashList, FlashListRef, ListRenderItem } from '@shopify/flash-list'
 import { StyleSheet } from 'react-native-unistyles'
 import { ChatMessage as ChatMessageType } from '../types'
 import { ChatMessage } from './ChatMessage'
-import { ChatThinking } from './ChatThinking'
+import { ErrorState } from './states'
+import { StreamingFooter } from './StreamingFooter'
 
 export interface ChatMessageListProps {
   messages: ChatMessageType[]
@@ -11,6 +13,8 @@ export interface ChatMessageListProps {
   streamingContent: string
   isThinking: boolean
   error: { code: string; message: string } | null
+  offline?: boolean
+  onRetry?: () => void
   ListHeaderComponent?: React.ReactElement | null
 }
 
@@ -20,62 +24,70 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   streamingContent,
   isThinking,
   error,
+  offline = false,
+  onRetry,
   ListHeaderComponent,
 }) => {
-  const listRef = useRef<FlatList<ChatMessageType>>(null)
+  const listRef = useRef<FlashListRef<ChatMessageType>>(null)
+  const contentHeight = useRef(0)
 
   useEffect(() => {
     if (messages.length > 0) {
       listRef.current?.scrollToEnd({ animated: true })
     }
-  }, [messages.length, streamingContent, isThinking])
+  }, [messages.length, streamingMessageId, isThinking])
 
-  const renderItem = ({ item }: { item: ChatMessageType }) => (
+  const handleContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      if (height > contentHeight.current && messages.length > 0) {
+        listRef.current?.scrollToEnd({ animated: true })
+      }
+      contentHeight.current = height
+    },
+    [messages.length],
+  )
+
+  const renderItem: ListRenderItem<ChatMessageType> = ({ item }) => (
     <ChatMessage message={item} testID={`chat-message-${item.id}`} />
   )
 
   const keyExtractor = (item: ChatMessageType) => item.id
 
-  const footer = () => {
-    if (!streamingMessageId) return null
-    return (
-      <View testID="chat-streaming-message">
-        {streamingContent !== '' && (
-          <ChatMessage
-            message={{
-              id: streamingMessageId,
-              role: 'assistant',
-              content: streamingContent,
-              createdAt: new Date().toISOString(),
-            }}
-            isStreaming
-            testID="chat-message-streaming"
-          />
-        )}
-        {isThinking && <ChatThinking />}
-      </View>
-    )
-  }
+  const getItemType = (item: ChatMessageType) => item.role
+
+  const showError = error && !(offline && error.code === 'OFFLINE')
 
   return (
     <View style={styles.container} testID="chat-message-list">
-      <FlatList
+      <FlashList
         ref={listRef}
         data={messages}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        getItemType={getItemType}
         ListHeaderComponent={ListHeaderComponent ?? undefined}
-        ListFooterComponent={footer}
+        ListFooterComponent={
+          <StreamingFooter
+            streamingMessageId={streamingMessageId}
+            streamingContent={streamingContent}
+            isThinking={isThinking}
+          />
+        }
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        onContentSizeChange={handleContentSizeChange}
         accessibilityRole="list"
         accessibilityLabel="Mensajes de la conversación"
+        testID="flash-list"
       />
-      {error && (
-        <View style={styles.errorBanner} testID="chat-error-banner" accessibilityRole="alert">
-          <Text style={styles.errorText}>{error.message}</Text>
-        </View>
-      )}
+      {showError ? (
+        <ErrorState
+          code={error.code}
+          message={error.message}
+          onRetry={onRetry}
+          testID="chat-error-banner"
+        />
+      ) : null}
     </View>
   )
 }
@@ -87,17 +99,4 @@ const styles = StyleSheet.create((theme) => ({
   content: {
     paddingVertical: theme.spacing[4],
   } satisfies ViewStyle,
-  errorBanner: {
-    margin: theme.spacing[4],
-    padding: theme.spacing[4],
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: theme.colors.overlay,
-  } satisfies ViewStyle,
-  errorText: {
-    fontFamily: theme.fonts.body,
-    fontSize: theme.fontSizes[14],
-    color: theme.colors.foreground,
-  } satisfies TextStyle,
 }))

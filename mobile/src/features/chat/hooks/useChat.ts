@@ -13,6 +13,7 @@ export interface UseChatOptions {
 export interface UseChatReturn {
   state: ChatState
   sendMessage: (content: string) => Promise<void>
+  retryLastMessage: () => Promise<void>
   reset: () => void
 }
 
@@ -51,20 +52,29 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     dispatch({ type: 'resetStream' })
   }, [stopBatching])
 
-  const sendMessage = useCallback(
+  const finalizeNoAnswer = useCallback(() => {
+    dispatch({
+      type: 'setError',
+      payload: {
+        code: 'NO_ANSWER',
+        message: 'No tengo una respuesta para eso.',
+      },
+    })
+    dispatch({ type: 'resetStream' })
+  }, [])
+
+  const finalizeCompletion = useCallback((createdAt: string) => {
+    dispatch({ type: 'completeStreaming', payload: { createdAt } })
+  }, [])
+
+  const streamContent = useCallback(
     async (content: string) => {
-      const trimmed = content.trim()
-      if (trimmed === '') return
-
-      abortRef.current = false
-      const createdAt = new Date().toISOString()
-      dispatch({ type: 'sendMessage', payload: { content: trimmed, createdAt } })
-
       let sawThinking = false
       let sawText = false
+      let sawError = false
 
       try {
-        const stream = getServices().ai.streamMessage({ message: trimmed, offline })
+        const stream = getServices().ai.streamMessage({ message: content, offline })
 
         for await (const chunk of stream) {
           if (abortRef.current) break
@@ -76,10 +86,14 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         flushBuffer()
         stopBatching()
 
+        if (sawError) {
+          return
+        }
+
         if (!sawText && !sawThinking) {
-          dispatch({ type: 'resetStream' })
+          finalizeNoAnswer()
         } else {
-          dispatch({ type: 'completeStreaming', payload: { createdAt: new Date().toISOString() } })
+          finalizeCompletion(new Date().toISOString())
         }
       } catch (error) {
         flushBuffer()
@@ -106,6 +120,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
             startBatching()
             break
           case 'error':
+            sawError = true
             flushBuffer()
             stopBatching()
             dispatch({ type: 'setError', payload: { code: chunk.code, message: chunk.message } })
@@ -119,8 +134,37 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         }
       }
     },
-    [offline, flushBuffer, startBatching, stopBatching],
+    [offline, flushBuffer, startBatching, stopBatching, finalizeNoAnswer, finalizeCompletion],
   )
+
+  const sendMessage = useCallback(
+    async (content: string) => {
+      const trimmed = content.trim()
+      if (trimmed === '') return
+
+      abortRef.current = false
+      const createdAt = new Date().toISOString()
+      dispatch({ type: 'sendMessage', payload: { content: trimmed, createdAt } })
+
+      getServices().analytics.track('message_sent', {
+        offline,
+        messageLength: trimmed.length,
+      })
+
+      await streamContent(trimmed)
+    },
+    [offline, streamContent],
+  )
+
+  const retryLastMessage = useCallback(async () => {
+    const lastUserMessage = [...state.messages].reverse().find((message) => message.role === 'user')
+    if (!lastUserMessage) return
+
+    abortRef.current = false
+    dispatch({ type: 'retryLastMessage' })
+
+    await streamContent(lastUserMessage.content)
+  }, [state.messages, streamContent])
 
   useEffect(() => {
     return () => {
@@ -133,8 +177,9 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     () => ({
       state,
       sendMessage,
+      retryLastMessage,
       reset,
     }),
-    [state, sendMessage, reset],
+    [state, sendMessage, retryLastMessage, reset],
   )
 }

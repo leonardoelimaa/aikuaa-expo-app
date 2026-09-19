@@ -98,4 +98,45 @@ describe('ChatMessageList', () => {
 
     expect(screen.getByTestId('custom-header')).toBeTruthy()
   })
+
+  it('uses FlashList with virtualization props', async () => {
+    await render(
+      <ChatMessageList
+        messages={messages}
+        streamingMessageId={null}
+        streamingContent=""
+        isThinking={false}
+        error={null}
+      />,
+    )
+
+    const flashList = screen.getByTestId('flash-list')
+    expect(flashList).toBeTruthy()
+    expect(flashList.props.getItemType).toBeDefined()
+    expect(flashList.props.keyExtractor).toBeDefined()
+  })
+
+  it('renders a long conversation without crashing', async () => {
+    const longMessages: ChatMessage[] = Array.from({ length: 100 }, (_, index) => ({
+      id: `msg-${index}`,
+      role: index % 2 === 0 ? 'user' : 'assistant',
+      content: `Mensaje ${index}`,
+      createdAt: new Date().toISOString(),
+    }))
+
+    await render(
+      <ChatMessageList
+        messages={longMessages}
+        streamingMessageId={null}
+        streamingContent=""
+        isThinking={false}
+        error={null}
+      />,
+    )
+
+    expect(screen.getByTestId('chat-message-list')).toBeTruthy()
+    expect(screen.getByTestId('flash-list')).toBeTruthy()
+    expect(screen.getByText('Mensaje 0')).toBeTruthy()
+    expect(screen.getByText('Mensaje 99')).toBeTruthy()
+  })
 })

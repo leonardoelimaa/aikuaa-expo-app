@@ -113,4 +113,21 @@ describe('chatReducer', () => {
     expect(next.isThinking).toBe(false)
     expect(next.status).toBe('idle')
   })
+
+  it('retryLastMessage preserves messages and resets streaming state', () => {
+    const errored: ChatState = {
+      ...baseState,
+      status: 'idle',
+      error: { code: 'TIMEOUT', message: 'Timeout' },
+    }
+
+    const next = chatReducer(errored, { type: 'retryLastMessage' })
+
+    expect(next.messages).toEqual(baseState.messages)
+    expect(next.error).toBeNull()
+    expect(next.status).toBe('streaming')
+    expect(next.streamingMessageId).not.toBeNull()
+    expect(next.streamingContent).toBe('')
+    expect(next.isThinking).toBe(false)
+  })
 })

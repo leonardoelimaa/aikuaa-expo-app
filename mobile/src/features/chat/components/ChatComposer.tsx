@@ -46,6 +46,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
           maxLength={2000}
           accessibilityLabel="Campo de mensaje"
           accessibilityHint="Escribe tu mensaje y presiona enviar"
+          accessibilityState={{ disabled }}
           testID="chat-composer-input"
           blurOnSubmit={false}
           onSubmitEditing={handleSend}
@@ -93,7 +94,7 @@ const styles = StyleSheet.create((theme) => ({
     maxHeight: 120,
     minHeight: 44,
     paddingVertical: theme.spacing[3],
-    lineHeight: 22,
+    lineHeight: theme.lineHeights[22],
   } satisfies TextStyle,
   sendButton: {
     width: 44,

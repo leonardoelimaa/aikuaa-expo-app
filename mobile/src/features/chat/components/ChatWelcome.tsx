@@ -8,6 +8,8 @@ export interface SuggestionPrompt {
 }
 
 export interface ChatWelcomeProps {
+  title?: string
+  subtitle?: string
   suggestions?: SuggestionPrompt[]
   onSuggestionPress: (prompt: SuggestionPrompt) => void
 }
@@ -19,16 +21,18 @@ const DEFAULT_SUGGESTIONS: SuggestionPrompt[] = [
 ]
 
 export const ChatWelcome: React.FC<ChatWelcomeProps> = ({
+  title = 'Chat',
+  subtitle = 'Pregunta lo que necesites sobre el evento.',
   suggestions = DEFAULT_SUGGESTIONS,
   onSuggestionPress,
 }) => {
   return (
     <View style={styles.container} testID="chat-welcome">
       <Text style={styles.title} testID="chat-welcome-title">
-        Chat
+        {title}
       </Text>
       <Text style={styles.subtitle} testID="chat-welcome-subtitle">
-        Pregunta lo que necesites sobre el evento.
+        {subtitle}
       </Text>
       <View style={styles.suggestions} testID="chat-suggestions">
         {suggestions.map((suggestion, index) => (

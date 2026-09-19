@@ -10,6 +10,8 @@ jest.mock('@/services/serviceRegistry', () => ({
 
 const mockedGetServices = jest.mocked(getServices)
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 describe('useChat', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -38,6 +40,34 @@ describe('useChat', () => {
 
     expect(streamSpy).not.toHaveBeenCalled()
     expect(result.current.state.messages).toEqual([])
+  })
+
+  it('tracks a message_sent analytics event when a message is sent', async () => {
+    const chunks: AIChunk[] = [{ type: 'text', content: 'Hola' }, { type: 'done' }]
+
+    const services = createMockServices()
+    mockedGetServices.mockReturnValue(services)
+    const trackSpy = jest.spyOn(services.analytics, 'track')
+    jest.spyOn(services.ai, 'streamMessage').mockImplementation(async function* () {
+      for (const chunk of chunks) {
+        yield chunk
+      }
+    })
+
+    const { result } = await renderHook(() => useChat())
+
+    await act(async () => {
+      await result.current.sendMessage('hola')
+    })
+
+    expect(trackSpy).toHaveBeenCalledTimes(1)
+    expect(trackSpy).toHaveBeenCalledWith(
+      'message_sent',
+      expect.objectContaining({
+        offline: false,
+        messageLength: 4,
+      }),
+    )
   })
 
   it('streams text chunks into a progressive assistant message', async () => {
@@ -140,7 +170,7 @@ describe('useChat', () => {
     })
   })
 
-  it('resets the stream for no-answer responses', async () => {
+  it('sets a NO_ANSWER error for no-answer responses', async () => {
     const chunks: AIChunk[] = [{ type: 'done' }]
 
     const services = createMockServices()
@@ -161,6 +191,84 @@ describe('useChat', () => {
       expect(result.current.state.messages).toHaveLength(1)
       expect(result.current.state.streamingMessageId).toBeNull()
       expect(result.current.state.status).toBe('idle')
+      expect(result.current.state.error).toEqual({
+        code: 'NO_ANSWER',
+        message: 'No tengo una respuesta para eso.',
+      })
+    })
+  })
+
+  it('retries the last user message after a loading failure', async () => {
+    const services = createMockServices()
+    mockedGetServices.mockReturnValue(services)
+
+    let attempt = 0
+    jest.spyOn(services.ai, 'streamMessage').mockImplementation(async function* () {
+      attempt += 1
+      if (attempt === 1) {
+        yield { type: 'thinking', content: 'Analizando...' }
+        await delay(30)
+        yield { type: 'error', code: 'TIMEOUT', message: 'Timeout' }
+        return
+      }
+      yield { type: 'thinking', content: 'Analizando...' }
+      await delay(30)
+      yield { type: 'text', content: 'Respuesta tras reintento' }
+      yield { type: 'done' }
+    })
+
+    const { result } = await renderHook(() => useChat())
+
+    await act(async () => {
+      await result.current.sendMessage('hola')
+    })
+
+    await waitFor(() => {
+      expect(result.current.state.error).toEqual({ code: 'TIMEOUT', message: 'Timeout' })
+      expect(result.current.state.status).toBe('idle')
+      expect(result.current.state.messages).toHaveLength(1)
+    })
+
+    await act(async () => {
+      await result.current.retryLastMessage()
+    })
+
+    await waitFor(() => {
+      expect(result.current.state.error).toBeNull()
+      expect(result.current.state.messages).toHaveLength(2)
+      expect(result.current.state.messages[1].role).toBe('assistant')
+      expect(result.current.state.messages[1].content).toBe('Respuesta tras reintento')
+      expect(result.current.state.status).toBe('idle')
+    })
+  })
+
+  it('sets a TIMEOUT error for the timeout keyword', async () => {
+    const { result } = await renderHook(() => useChat())
+
+    await act(async () => {
+      await result.current.sendMessage('timeout')
+    })
+
+    await waitFor(() => {
+      expect(result.current.state.error).toEqual({
+        code: 'TIMEOUT',
+        message: 'El servidor tardó demasiado en responder.',
+      })
+    })
+  })
+
+  it('sets a BACKEND_DOWN error for the backend keyword', async () => {
+    const { result } = await renderHook(() => useChat())
+
+    await act(async () => {
+      await result.current.sendMessage('backend down')
+    })
+
+    await waitFor(() => {
+      expect(result.current.state.error).toEqual({
+        code: 'BACKEND_DOWN',
+        message: 'No se pudo conectar con el servidor.',
+      })
     })
   })
 })

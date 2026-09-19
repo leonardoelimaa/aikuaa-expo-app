@@ -25,6 +25,7 @@ export type ChatAction =
   | { type: 'setError'; payload: ChatError }
   | { type: 'completeStreaming'; payload: { createdAt: string } }
   | { type: 'resetStream' }
+  | { type: 'retryLastMessage' }
 
 export const initialChatState: ChatState = {
   messages: [],
