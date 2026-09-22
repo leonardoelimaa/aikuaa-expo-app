@@ -1,0 +1,16 @@
+{
+  "status": "failed",
+  "gate": "ESCALATE",
+  "changes": ["Restored createMockAIService factory.", "Applied mechanical typing, fixture, and allowed-path formatting fixes."],
+  "evidence": [
+    {"check": "Phase0 contracts", "result": "PASS 5/5 suites, 22/22 tests"},
+    {"check": "typecheck", "result": "PASS"},
+    {"check": "lint", "result": "FAIL 4 Prettier errors in migrated app tests; 3 pre-existing warnings"},
+    {"check": "full Jest", "result": "FAIL 45/47 suites, 194/197 tests"},
+    {"check": "Expo export", "result": "PASS web, Android, iOS"}
+  ],
+  "findings": ["Terminal error/no-answer leaves streamingMessageId populated.", "retryLastMessage still marks thinking before a thinking chunk.", "Two migrated app tests need formatting."],
+  "diff_hash": "b0d3c10dd59ac45c4b9a7bfaf741f0217841ffc9e08ea1542e8c8729e4ebb243",
+  "environment_hash": "4d3ffa4c20c15af4fe79391f8a56ac07ed99582310326c5e270c5bae11ceac12",
+  "handoff": "Return to A attempt 4 for two bounded reducer fixes and app-test formatting."
+}

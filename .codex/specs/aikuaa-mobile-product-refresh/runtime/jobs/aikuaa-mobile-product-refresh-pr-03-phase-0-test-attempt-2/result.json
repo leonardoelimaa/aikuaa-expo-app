@@ -1,0 +1,1 @@
+{"status":"succeeded","changes":["Corrected compatibility imports to app/(app) routes."],"red_evidence":["nested tabs module missing","workspace catalog hook missing","planned settings behavior absent"],"accidental_failures":[],"diff_hash":"12b0a572250f6b50cccb32538d364b35f5ebfe3c1839fdae3bfb9094f1613b50","handoff":"Phase0 executable intentional RED; proceed to A."}

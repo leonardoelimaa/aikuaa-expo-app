@@ -1,0 +1,14 @@
+{
+  "job_id": "aikuaa-mobile-product-refresh/pr-02/phase-A/attempt-4",
+  "phase": "A",
+  "objective": "Resolve the two final reducer defects and format the two workspace-migrated app tests from test attempt 3.",
+  "risk": "R2",
+  "profile": "strong_coding",
+  "capabilities": ["code_write"],
+  "skills": [{"name": "task-tdd", "path": "/Users/leonardo/.codex/skills/task-tdd/SKILL.md", "required": true}, {"name": "systematic-debugging", "path": "/Users/leonardo/.codex/skills/systematic-debugging/SKILL.md", "required": true}],
+  "allowed_paths": ["mobile/src/features/chat/state/chatReducer.ts", "mobile/src/app/__tests__/welcome.test.tsx", "mobile/src/app/__tests__/shell-navigation.test.tsx"],
+  "forbidden_actions": ["read/grep/bash/tests", "edit Markdown/runtime/package files", "git operations", "spawn", "weaken tests", "change architecture"],
+  "inputs": {"diff_hash": "b0d3c10dd59ac45c4b9a7bfaf741f0217841ffc9e08ea1542e8c8729e4ebb243", "environment_hash": "4d3ffa4c20c15af4fe79391f8a56ac07ed99582310326c5e270c5bae11ceac12", "required_fixes": ["setError clears streamingMessageId and streamingContent", "retryLastMessage sets isThinking false", "format two app tests"]},
+  "verification": [{"check": "Independent test attempt 4", "expected": "all gates green"}],
+  "output_schema": {"status": "succeeded | failed | blocked | unknown", "changes": [], "evidence": [], "findings": [], "handoff": "string"}
+}

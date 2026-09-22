@@ -1,0 +1,5 @@
+{
+  "status":"succeeded","verdict":"Approved with follow-ups","findings":[],"architecture_signal":"none","diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203",
+  "evidence":[{"check":"canonical diff","result":"MATCH","timestamp":"2026-09-20T14:07:20-03:00","diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203"},{"check":"three Phase B blockers","result":"RESOLVED: opaque 1024 iOS icon; adaptive unmasked safe-zone foreground; dedicated splash mark/imageWidth 200","timestamp":"2026-09-20T14:07:20-03:00","diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203"},{"check":"post-fix gate","result":"PASS: lint, typecheck, 42 suites/176 tests, Expo export web/iOS/Android","timestamp":"2026-09-20T14:07:20-03:00","diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203"}],
+  "handoff":"Proceed to E; record native release-build splash/adaptive-mask preview as unverified non-blocking follow-up."
+}

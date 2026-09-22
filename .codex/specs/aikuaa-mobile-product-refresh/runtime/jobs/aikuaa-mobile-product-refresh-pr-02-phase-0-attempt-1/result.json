@@ -1,0 +1,7 @@
+{
+  "status":"succeeded","changes":["Added five public-interface PR-02 RED suites; no production/Markdown changes."],
+  "evidence":[{"check":"targeted PR-02 tests","result":"RED: 5 suites, 19 collected tests; query module intentionally missing","timestamp":"2026-09-20T17:29:46Z","diff_hash":"0117d2d9cce64aef0e5145bdc8a7fe108f6e1f5f3db07fee331ca45011c12482","environment_hash":"cb15ca0c85677035a91549106a7764abb2146c69cdcd99a413cee718fcc5602f"},{"check":"affected baseline","result":"PASS: 5 suites, 41 tests","timestamp":"2026-09-20T17:26:32Z","diff_hash":"0117d2d9cce64aef0e5145bdc8a7fe108f6e1f5f3db07fee331ca45011c12482","environment_hash":"cb15ca0c85677035a91549106a7764abb2146c69cdcd99a413cee718fcc5602f"}],
+  "red_failures":["provider workspace actions/revision/restore","Portuguese non-event demo entry","workspace catalog/scoped company/AI/conversation contracts","stable identities/defensive copies","rendered draft and stale stream isolation","query provider/scoped cache"],
+  "findings":["TanStack Query absent from current package and must be added for approved architecture."],
+  "handoff":"Phase A implements approved contract until all RED suites are green, then runs focused checks."
+}

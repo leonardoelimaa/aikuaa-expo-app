@@ -1,0 +1,18 @@
+{
+  "job_id":"aikuaa-mobile-product-refresh/pr-01/phase-B/attempt-1",
+  "phase":"B",
+  "objective":"Independently review PR-01 behavior, tests, scope, compatibility, brand provenance, accessibility, and regressions on the certified diff.",
+  "risk":"R1",
+  "profile":"strong_review",
+  "capabilities":["read_only"],
+  "skills":[
+    {"name":"implementation-code-review","path":"/Users/leonardo/.codex/skills/implementation-code-review/SKILL.md","required":true},
+    {"name":"mobile-developer","path":"/Users/leonardo/.codex/skills/mobile-developer/SKILL.md","required":true},
+    {"name":"accessibility-compliance-accessibility-audit","path":"/Users/leonardo/.codex/skills/accessibility-compliance-accessibility-audit/SKILL.md","required":true}
+  ],
+  "allowed_paths":["mobile/app.config.ts","mobile/package.json","mobile/package-lock.json","mobile/assets/**","mobile/src/theme/**","mobile/src/components/**"],
+  "forbidden_actions":["edit any file","git push","git commit","git reset","git rebase","spawn workers","approve architecture unless semantically required"],
+  "inputs":{"canonical_pr":".codex/specs/aikuaa-mobile-product-refresh/pr-01-brand-foundation.md","task":".codex/specs/aikuaa-mobile-product-refresh/tasks.md#T01.1","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38","test_gate":"PASS: lint, typecheck, 42 suites/173 tests, Expo export web/iOS/Android","asset_provenance":["https://www.aikuaa.ai/icon-512.png","https://www.aikuaa.ai/og-pt.png"],"unverified":["native crop","VoiceOver/TalkBack","native focus rendering"]},
+  "verification":[{"check":"Review current canonical diff and public behavior against PR-01 acceptance and certified evidence","expected":"Approved, Approved with follow-ups, or blocking findings with exact file/line/fix"}],
+  "output_schema":{"status":"succeeded | failed | blocked","verdict":"Approved | Approved with follow-ups | Requires blocking fixes","findings":[{"severity":"blocking | follow-up","file":"string","line":"number","rationale":"string","required_fix":"string"}],"architecture_signal":"none | requires architecture review","diff_hash":"sha256","evidence":[{"check":"string","result":"string","timestamp":"ISO-8601","diff_hash":"sha256"}],"handoff":"string"}
+}

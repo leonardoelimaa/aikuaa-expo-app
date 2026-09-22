@@ -1,0 +1,29 @@
+{
+  "job_id": "aikuaa-mobile-product-refresh/pr-02/phase-test/attempt-3",
+  "phase": "test",
+  "objective": "Independently validate PR-02 after A recovery attempt 3 and apply only bounded mechanical fixes or escalate behavior issues.",
+  "risk": "R2",
+  "profile": "test_standard",
+  "capabilities": ["test_execution", "code_write"],
+  "skills": [
+    {"name": "testing-patterns", "path": "/Users/leonardo/.codex/skills/testing-patterns/SKILL.md", "required": true},
+    {"name": "test-automator", "path": "/Users/leonardo/.codex/skills/test-automator/SKILL.md", "required": true},
+    {"name": "systematic-debugging", "path": "/Users/leonardo/.codex/skills/systematic-debugging/SKILL.md", "required": true}
+  ],
+  "allowed_paths": ["mobile/src/context/**", "mobile/src/services/**", "mobile/src/stores/**", "mobile/src/mocks/**", "mobile/src/features/chat/**", "mobile/src/app/__tests__/**", "mobile/src/screens/welcome/**", "mobile/src/dev/demo/**", "mobile/package-lock.json"],
+  "forbidden_actions": ["git push", "git commit", "git reset", "git rebase", "spawn workers", "edit Markdown/runtime JSON", "weaken/remove/skip tests", "change approved architecture", "edit PR01 files"],
+  "inputs": {
+    "diff_hash": "d4a87f64ab265635e49ca3824233eb0ddde5dcbc505782329796fc3be41ca103",
+    "environment_hash": "4d3ffa4c20c15af4fe79391f8a56ac07ed99582310326c5e270c5bae11ceac12",
+    "prior_gate": "Phase0 5/5 suites and 22/22 tests passed; full gate had 10 failing suites, 28 failing tests, 16 type errors, and one formatting error.",
+    "claimed_fixes": ["deterministic scoped AI scenarios", "provider-backed hook and screen tests", "workspace-typed fixtures", "legacy demo reset and app-context tests", "retry thinking contract"]
+  },
+  "verification": [
+    {"command": "cd mobile && npm test -- --runInBand src/context/AppContext.workspace.test.tsx src/services/__tests__/workspaceIsolation.contract.test.ts src/features/chat/hooks/__tests__/workspaceIsolation.test.tsx src/app/__tests__/workspaceQuery.contract.test.tsx src/app/__tests__/enterpriseEntry.contract.test.tsx", "expected": "green"},
+    {"command": "cd mobile && npm run typecheck", "expected": "exit 0"},
+    {"command": "cd mobile && npm run lint", "expected": "exit 0"},
+    {"command": "cd mobile && npm test -- --runInBand", "expected": "full green"},
+    {"command": "cd mobile && npx expo export --platform all --output-dir /tmp/aikuaa-pr02-export", "expected": "exit 0"}
+  ],
+  "output_schema": {"status": "succeeded | failed | blocked | unknown", "changes": [], "evidence": [], "findings": [], "escalation": [], "handoff": "string"}
+}

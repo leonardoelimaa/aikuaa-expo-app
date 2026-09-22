@@ -1,0 +1,14 @@
+{
+  "job_id":"aikuaa-mobile-product-refresh/pr-01/phase-test/attempt-2",
+  "phase":"test",
+  "objective":"Independently re-certify the complete PR-01 validation battery after Phase C native asset fixes.",
+  "risk":"R1",
+  "profile":"test_standard",
+  "capabilities":["test_execution","code_write"],
+  "skills":[{"name":"testing-patterns","path":"/Users/leonardo/.codex/skills/testing-patterns/SKILL.md","required":true},{"name":"test-automator","path":"/Users/leonardo/.codex/skills/test-automator/SKILL.md","required":true}],
+  "allowed_paths":["mobile/app.config.ts","mobile/assets/brand/**","mobile/src/components/__tests__/appConfig.test.ts"],
+  "forbidden_actions":["git push","git commit","git reset","git rebase","spawn workers","edit Markdown","weaken tests","edit outside allowed paths","change behavior/design beyond mechanical fixes"],
+  "inputs":{"diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203","environment_hash":"cb15ca0c85677035a91549106a7764abb2146c69cdcd99a413cee718fcc5602f","fixed_blockers":3,"unverified":["native launcher previews","VoiceOver/TalkBack","native focus rendering"]},
+  "verification":[{"command":"cd mobile && npm run lint","expected":"exit 0"},{"command":"cd mobile && npm run typecheck","expected":"exit 0"},{"command":"cd mobile && npm test -- --runInBand","expected":"exit 0"},{"command":"cd mobile && npx expo export","expected":"exit 0"}],
+  "output_schema":{"status":"succeeded | failed | blocked | unknown","changes":[],"evidence":[],"findings":[],"unverified_checks":[],"handoff":"string"}
+}

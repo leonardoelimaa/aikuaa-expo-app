@@ -1,0 +1,9 @@
+{
+  "job_id":"aikuaa-mobile-product-refresh/pr-01/phase-D/attempt-1","phase":"D","objective":"Revalidate only the three PR-01 native asset/config blockers fixed in Phase C on the post-test stable diff.","risk":"R1","profile":"strong_review","capabilities":["read_only"],
+  "skills":[{"name":"implementation-code-review","path":"/Users/leonardo/.codex/skills/implementation-code-review/SKILL.md","required":true},{"name":"mobile-developer","path":"/Users/leonardo/.codex/skills/mobile-developer/SKILL.md","required":true},{"name":"accessibility-compliance-accessibility-audit","path":"/Users/leonardo/.codex/skills/accessibility-compliance-accessibility-audit/SKILL.md","required":true}],
+  "allowed_paths":["mobile/app.config.ts","mobile/assets/brand/**","mobile/src/components/__tests__/appConfig.test.ts"],
+  "forbidden_actions":["edit any file","git push","git commit","git reset","git rebase","spawn workers","review unrelated findings"],
+  "inputs":{"diff_hash":"9268f48cfdf1f7faba00973195d001c26089adf5535aba459be47b167204c203","environment_hash":"cb15ca0c85677035a91549106a7764abb2146c69cdcd99a413cee718fcc5602f","post_fix_test_gate":"PASS: lint, typecheck, 42 suites/176 tests, Expo export web/iOS/Android","blockers":["iOS icon opacity/platform suitability","Android adaptive safe-zone/unmasked foreground","dedicated splash mark/imageWidth"]},
+  "verification":[{"check":"Revalidate the three blockers only against current files, metrics, config tests, and official provenance","expected":"Approved or remaining blocking fixes with exact evidence"}],
+  "output_schema":{"status":"succeeded | failed | blocked","verdict":"Approved | Approved with follow-ups | Requires blocking fixes","findings":[],"architecture_signal":"none | requires architecture review","diff_hash":"sha256","evidence":[],"handoff":"string"}
+}

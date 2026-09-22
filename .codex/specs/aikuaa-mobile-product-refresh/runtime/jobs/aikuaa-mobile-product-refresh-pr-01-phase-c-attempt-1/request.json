@@ -1,0 +1,14 @@
+{
+  "job_id":"aikuaa-mobile-product-refresh/pr-01/phase-C/attempt-1",
+  "phase":"C",
+  "objective":"Fix only the three PR-01 native asset/config blockers from review round 1 and update public configuration tests.",
+  "risk":"R1",
+  "profile":"strong_coding",
+  "capabilities":["code_write","test_execution"],
+  "skills":[{"name":"task-tdd","path":"/Users/leonardo/.codex/skills/task-tdd/SKILL.md","required":true},{"name":"mobile-developer","path":"/Users/leonardo/.codex/skills/mobile-developer/SKILL.md","required":true}],
+  "allowed_paths":["mobile/app.config.ts","mobile/assets/brand/**","mobile/src/components/__tests__/appConfig.test.ts"],
+  "forbidden_actions":["git push","git commit","git reset","git rebase","spawn workers","edit Markdown","change tokens or controls","edit service/context/navigation contracts","edit outside allowed paths","broaden scope"],
+  "inputs":{"current_diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38","blockers":["Opaque platform-specific iOS icon, preferably 1024x1024.","Transparent unmasked owl Android adaptive foreground entirely within central 66/108 safe zone with separate cream background.","Dedicated transparent official splash mark with explicit imageWidth and cream background."],"official_sources":["https://www.aikuaa.ai/icon-512.png","https://www.aikuaa.ai/og-pt.png","Search the official site for a higher-resolution/vector official owl asset before deriving; preserve exact provenance and do not use the 80x80 derivative."]},
+  "verification":[{"command":"cd mobile && npm test -- --runInBand src/components/__tests__/appConfig.test.ts","expected":"exit 0 and assertions cover dimensions/alpha/safe-zone/config"},{"command":"cd mobile && npm run typecheck","expected":"exit 0"},{"command":"cd mobile && npm run lint","expected":"exit 0"},{"command":"cd mobile && npx expo config --type public","expected":"exit 0"}],
+  "output_schema":{"status":"succeeded | failed | blocked | unknown","changes":[],"evidence":[{"check":"string","result":"string","timestamp":"ISO-8601","diff_hash":"sha256","environment_hash":"sha256"}],"findings":[],"official_asset_provenance":{},"handoff":"string"}
+}

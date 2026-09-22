@@ -1,0 +1,14 @@
+{
+  "status":"succeeded",
+  "changes":[],
+  "evidence":[
+    {"check":"diff integrity","result":"PASS: unchanged diff, git diff --check clean, no .skip/.only in added tests","timestamp":"2026-09-20T16:48:26Z","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npm run lint","result":"PASS exit 0; three pre-existing out-of-scope warnings","timestamp":"2026-09-20T16:47:00Z","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npm run typecheck","result":"PASS exit 0","timestamp":"2026-09-20T16:47:00Z","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npm test -- --runInBand","result":"PASS exit 0; 42 suites, 173 tests, 0 snapshots","timestamp":"2026-09-20T16:47:00Z","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npx expo export","result":"PASS exit 0; web/iOS/Android bundles, 114 assets, 3 static files","timestamp":"2026-09-20T16:47:00Z","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"}
+  ],
+  "findings":["Pre-existing React act-environment console errors in DemoResetButton tests.","Non-blocking NO_COLOR/FORCE_COLOR warnings."],
+  "unverified_checks":["Native Android adaptive-icon crop.","VoiceOver/TalkBack behavior.","Native-device focus rendering."],
+  "handoff":"Test gate certified green on stable diff; proceed to isolated review."
+}

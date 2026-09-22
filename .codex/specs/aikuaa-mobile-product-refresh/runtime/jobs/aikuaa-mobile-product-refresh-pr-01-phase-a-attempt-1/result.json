@@ -1,0 +1,30 @@
+{
+  "status": "succeeded",
+  "changes": [
+    "Configured official icon, adaptive icon, splash artwork, favicon, scheme, and light background.",
+    "Added Expo SDK 57-compatible expo-splash-screen dependency and configuration.",
+    "Corrected the cream/navy palette and added semantic color roles while preserving compatibility aliases.",
+    "Added reusable accessible Button and TextField controls with visible default, pressed, focus, and disabled states and 48px minimum targets.",
+    "Added public-behavior tests for native config, semantic tokens, typography, and control states."
+  ],
+  "evidence": [
+    {"check":"focused RED test run","result":"failed for missing controls, incorrect palette, and absent branding config","timestamp":"2026-09-20T13:43:36-03:00","diff_hash":"pre-implementation","environment_hash":"1b9e53092298bf5e99a0b39ac82e22cc634c0809580be4e42d4def0658694f1b"},
+    {"check":"focused Jest: semanticTheme, Button, TextField, appConfig","result":"PASS: 4 suites, 10 tests","timestamp":"2026-09-20T13:43:36-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npm run typecheck","result":"PASS","timestamp":"2026-09-20T13:43:36-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npm run lint","result":"PASS with zero errors and three pre-existing warnings outside scope","timestamp":"2026-09-20T13:43:36-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"},
+    {"check":"npx expo config --type public","result":"PASS: resolved scheme, icon, adaptive icon, splash plugin, favicon, light background","timestamp":"2026-09-20T13:43:36-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54","environment_hash":"d1b78cab27318fb5c0ac3844b73aa2436a7461769a036f126c9ab0aee6133b38"}
+  ],
+  "findings": [
+    "Native adaptive-icon crop, VoiceOver/TalkBack, and focus rendering remain unverified without targets.",
+    "npm reported 14 moderate dependency vulnerabilities outside PR-01 scope.",
+    "Full Jest and Expo export are pending independent test gate."
+  ],
+  "official_asset_provenance": {
+    "identity_page":"https://www.aikuaa.ai/pt/",
+    "manifest":"https://www.aikuaa.ai/site.webmanifest",
+    "icon":"https://www.aikuaa.ai/icon-512.png",
+    "splash_wordmark":"https://www.aikuaa.ai/og-pt.png",
+    "excluded":"80x80 header derivative was not used or upscaled"
+  },
+  "handoff":"Run independent full PR-01 test gate; retain native-only checks as unverified when targets are unavailable."
+}

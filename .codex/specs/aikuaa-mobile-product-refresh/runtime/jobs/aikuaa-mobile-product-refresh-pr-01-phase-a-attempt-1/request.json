@@ -1,0 +1,59 @@
+{
+  "job_id": "aikuaa-mobile-product-refresh/pr-01/phase-A/attempt-1",
+  "phase": "A",
+  "objective": "Implement PR-01 official brand assets, semantic design foundation, and reusable accessible mobile controls as a test-first vertical slice without changing service or context contracts.",
+  "risk": "R1",
+  "profile": "strong_coding",
+  "capabilities": ["code_write", "test_execution"],
+  "skills": [
+    {"name": "task-tdd", "path": "/Users/leonardo/.codex/skills/task-tdd/SKILL.md", "required": true},
+    {"name": "mobile-developer", "path": "/Users/leonardo/.codex/skills/mobile-developer/SKILL.md", "required": true},
+    {"name": "accessibility-compliance-accessibility-audit", "path": "/Users/leonardo/.codex/skills/accessibility-compliance-accessibility-audit/SKILL.md", "required": true}
+  ],
+  "allowed_paths": [
+    "mobile/app.config.ts",
+    "mobile/package.json",
+    "mobile/package-lock.json",
+    "mobile/assets/**",
+    "mobile/src/theme/**",
+    "mobile/src/components/**"
+  ],
+  "forbidden_actions": [
+    "git push",
+    "git commit",
+    "git reset",
+    "git rebase",
+    "spawn workers",
+    "edit Markdown",
+    "edit service/context/navigation contracts",
+    "edit files outside allowed_paths"
+  ],
+  "inputs": {
+    "spec": ".codex/specs/aikuaa-mobile-product-refresh/README.md",
+    "task": ".codex/specs/aikuaa-mobile-product-refresh/tasks.md#T01.1",
+    "canonical_pr": ".codex/specs/aikuaa-mobile-product-refresh/pr-01-brand-foundation.md",
+    "napkin_context": "Preserve Expo/RN/Unistyles feature-based Ports & Adapters, token-only theming, mock-backed service boundaries, and current state ownership. No service/context behavior changes.",
+    "brand_contract": "Cream #faf9f6/#f5f3ed/#ebe8df; navy #0a1628/#0f1f38/#162b4a/#1e3a61/#2a4d7a/#4a6b96/#7a96b8/#a8bdd4; Manrope, DM Sans, DM Mono. Official high-resolution owl/wordmark only; do not upscale the observed 80x80 header image.",
+    "spec_hashes": {
+      "readme": "e1c138d926536a914ea27c4c5d8a0b88521e0efd6336dcc67e9fbec35c6611bf",
+      "tasks": "eb603b01407f5ae921b7fd8148ee370e35dc211159483713da613e31095f7fe0",
+      "pr": "9526b4bcddfd74f83c3efc16a32322257b9a15da736bf0c31d0b71b914b31708"
+    },
+    "current_diff_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "environment_hash": "1b9e53092298bf5e99a0b39ac82e22cc634c0809580be4e42d4def0658694f1b",
+    "base_commit": "e8a56b524c79c56033cc57a85c2ef15fdb1ce838"
+  },
+  "verification": [
+    {"command": "cd mobile && npm run lint", "expected": "exit 0"},
+    {"command": "cd mobile && npm run typecheck", "expected": "exit 0"},
+    {"command": "cd mobile && npm test -- --runInBand", "expected": "exit 0"},
+    {"command": "cd mobile && npx expo export", "expected": "exit 0"}
+  ],
+  "output_schema": {
+    "status": "succeeded | failed | blocked | unknown",
+    "changes": [],
+    "evidence": [{"check": "string", "result": "string", "timestamp": "ISO-8601", "diff_hash": "sha256", "environment_hash": "sha256"}],
+    "findings": [],
+    "handoff": "string"
+  }
+}

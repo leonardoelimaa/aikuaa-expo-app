@@ -1,0 +1,38 @@
+{
+  "feature": "aikuaa-mobile-product-refresh",
+  "initiativeStatus": "RUNNING",
+  "currentPr": "PR-04",
+  "currentPhase": "discovery",
+  "nextRunnablePr": "PR-04",
+  "orderedPrs": [
+    "PR-01",
+    "PR-02",
+    "PR-03",
+    "PR-04",
+    "PR-05",
+    "PR-06",
+    "PR-07"
+  ],
+  "closedPrs": ["PR-01", "PR-02", "PR-03"],
+  "reviewedSpecHash": "3dfdeee868ff8a634110e13bec534d14e2eea0800aec6e86522c3328445b5d09",
+  "currentMarkdownHash": "e6e7e84b305cae06ac3eeef8482c1de2f8fc0a67df8e07879bc3952daa30cb17",
+  "environmentHash": "3d636c9df12211eba04ce06d64b8edf5b5c0b52873bc41c0d3a1106f44768715",
+  "planningReview": {
+    "verdict": "Approved with follow-ups",
+    "architectureReviewRequired": true,
+    "followUps": [
+      "Enforce the mandatory PR-02 pre-implementation and closure architecture gates.",
+      "Before PR-06 Phase A, choose and append the restart-persistence behavior and update its public-interface Verification."
+    ]
+  },
+  "activeJob": null,
+  "lastCompletedJob": {
+    "jobId": "aikuaa-mobile-product-refresh/pr-03/phase-E/attempt-1",
+    "status": "SUCCEEDED_CLOSED",
+    "completedAt": "2026-09-20T16:55:44-03:00",
+    "diffHash": "635c05b299f689cca3b08b68a4c678190aa3969d95de55126151f47239db6bf4",
+    "environmentHash": "4d3ffa4c20c15af4fe79391f8a56ac07ed99582310326c5e270c5bae11ceac12"
+  },
+  "architectureCloseJob": {"jobId":"aikuaa-mobile-product-refresh/pr-02/architecture-close/attempt-3","status":"SUCCEEDED_APPROVED","completedAt":"2026-09-20T15:55:00-03:00","inputDiffHash":"81f5042edb0e92f5a65d422731520c0ff43b4474f0e4364659e7a225dde27bbb","profile":"gpt-5.6-sol/high"},
+  "updatedAt": "2026-09-20T16:55:44-03:00"
+}

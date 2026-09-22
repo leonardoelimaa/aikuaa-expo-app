@@ -1,0 +1,13 @@
+{
+  "status":"succeeded",
+  "verdict":"Requires blocking fixes",
+  "findings":[
+    {"severity":"blocking","file":"mobile/app.config.ts","line":9,"rationale":"Top-level icon used by iOS has transparent corners and 21.84% non-opaque pixels; native requirement expects square artwork without transparency.","required_fix":"Create opaque platform-appropriate iOS icon, preferably 1024x1024, configure platform-specific icon, and test it."},
+    {"severity":"blocking","file":"mobile/app.config.ts","line":33,"rationale":"Android adaptive foreground reuses a masked circular badge reaching canvas edges; over 52% of opaque pixels are outside the guaranteed 66/108 safe zone.","required_fix":"Create transparent unmasked owl foreground inside safe zone with separate cream background and update tests."},
+    {"severity":"blocking","file":"mobile/app.config.ts","line":21,"rationale":"The 1200x630 social card is not suitable splash artwork and defaults to an illegible ~100x52.5 render.","required_fix":"Create dedicated transparent official splash mark, set explicit imageWidth/background, and update tests."}
+  ],
+  "architecture_signal":"none",
+  "diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54",
+  "evidence":[{"check":"canonical diff","result":"MATCH","timestamp":"2026-09-20T13:54:40-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54"},{"check":"tokens, controls, scope, contracts","result":"PASS","timestamp":"2026-09-20T13:54:40-03:00","diff_hash":"3771ac02728a018f828a781ca258feb92c17d23aeabf51e555776ae0d1f63f54"}],
+  "handoff":"Phase C must fix only the three native asset/config blockers, then rerun full test gate and isolated D."
+}
