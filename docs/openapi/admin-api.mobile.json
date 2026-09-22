@@ -1,0 +1,4861 @@
+{
+ "openapi": "3.0.0",
+ "paths": {
+  "/db/user/me": {
+   "patch": {
+    "description": "Permite al usuario autenticado actualizar sus propios datos de perfil (bio, whatsapp, idioma, avatar, customChatInstructions).",
+    "operationId": "UserController_updateMyProfile",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateProfileDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Profile updated successfully",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Update own profile",
+    "tags": [
+     "Users"
+    ]
+   }
+  },
+  "/db/llm-organization": {
+   "post": {
+    "description": "Crea una nueva asociación entre un LLM y una organización, configurando la API Key específica para esa organización. Permite que cada organización tenga sus propias credenciales para los proveedores de LLM.",
+    "operationId": "LlmOrganizationController_create",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateLlmOrganizationDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "API Key de LLM agregada exitosamente a la organización",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganization"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Datos inválidos"
+     },
+     "404": {
+      "description": "Organización o LLM no encontrado"
+     },
+     "409": {
+      "description": "Ya existe una API Key configurada para este LLM en esta organización"
+     }
+    },
+    "summary": "Agregar API Key de LLM a una organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   },
+   "get": {
+    "description": "Retorna la lista completa de todas las asociaciones entre LLMs y organizaciones. No incluye las API Keys por seguridad.",
+    "operationId": "LlmOrganizationController_findAll",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Lista de configuraciones retornada con éxito",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganization"
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Listar todas las configuraciones de LLM por organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization/organization/{organizationId}": {
+   "get": {
+    "description": "Retorna todos los LLMs que tienen API Keys configuradas para una organización específica. Útil para mostrar qué modelos están disponibles para una organización.",
+    "operationId": "LlmOrganizationController_findByOrganization",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID de la organización",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de LLMs de la organización retornada con éxito",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganization"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Organización no encontrada"
+     }
+    },
+    "summary": "Listar LLMs configurados para una organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization/llm/{llmId}": {
+   "get": {
+    "description": "Retorna todas las organizaciones que tienen API Keys configuradas para un LLM específico. Útil para administración de proveedores.",
+    "operationId": "LlmOrganizationController_findByLlm",
+    "parameters": [
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID del LLM",
+      "schema": {
+       "example": "018f5c7d-9e4a-7123-8456-9abcdef01234",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de organizaciones con este LLM retornada con éxito",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganization"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "LLM no encontrado"
+     }
+    },
+    "summary": "Listar organizaciones que tienen configurado un LLM",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization/import/sources/{targetOrganizationId}": {
+   "get": {
+    "description": "Retorna las organizaciones que ya tienen modelos configurados, con sus modelos, cuántas configuraciones por tarea lleva cada uno y si el modelo ya está asignado en la organización de destino. La organización de destino queda excluida de la lista. Nunca retorna claves API.",
+    "operationId": "LlmOrganizationController_listImportSources",
+    "parameters": [
+     {
+      "name": "targetOrganizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID de la organización que recibiría los modelos",
+      "schema": {
+       "example": "8881f9d5-c6ab-45a6-94fb-8f46ea9f757b",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Catálogo de origen retornado con éxito"
+     },
+     "403": {
+      "description": "Solo administradores globales pueden importar modelos"
+     },
+     "404": {
+      "description": "Organización de destino no encontrada"
+     }
+    },
+    "summary": "Listar organizaciones desde las que se pueden importar modelos",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization/import": {
+   "post": {
+    "description": "Copia a la organización de destino los modelos seleccionados de otra organización, con su clave API y todas las configuraciones por tarea (system prompts, temperatura, tokens). Los modelos ya asignados se omiten, salvo que se pida sobrescribir. Todo ocurre en una única transacción.",
+    "operationId": "LlmOrganizationController_importFromOrganization",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ImportLlmOrganizationDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Importación finalizada; retorna el resumen de la operación"
+     },
+     "400": {
+      "description": "Origen y destino iguales, o algún modelo no existe en la organización de origen"
+     },
+     "403": {
+      "description": "Solo administradores globales pueden importar modelos"
+     },
+     "404": {
+      "description": "Organización de origen o de destino no encontrada"
+     }
+    },
+    "summary": "Importar modelos desde otra organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization/{organizationId}/{llmId}": {
+   "get": {
+    "description": "Retorna los detalles de la configuración de un LLM específico para una organización específica. No incluye la API Key por seguridad.",
+    "operationId": "LlmOrganizationController_findOne",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID de la organización",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID del LLM",
+      "schema": {
+       "example": "018f5c7d-9e4a-7123-8456-9abcdef01234",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuración encontrada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganization"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuración no encontrada"
+     }
+    },
+    "summary": "Obtener configuración específica de LLM para una organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   },
+   "patch": {
+    "description": "Actualiza la API Key de un LLM para una organización específica. Útil cuando se necesita rotar credenciales o corregir una API Key incorrecta.",
+    "operationId": "LlmOrganizationController_update",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID de la organización",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID del LLM",
+      "schema": {
+       "example": "018f5c7d-9e4a-7123-8456-9abcdef01234",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateLlmOrganizationDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "API Key actualizada con éxito",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganization"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Datos inválidos"
+     },
+     "404": {
+      "description": "Configuración no encontrada"
+     }
+    },
+    "summary": "Actualizar API Key de LLM para una organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   },
+   "delete": {
+    "description": "Elimina la API Key y la asociación de un LLM para una organización específica. La organización ya no podrá usar este LLM hasta que se configure una nueva API Key.",
+    "operationId": "LlmOrganizationController_remove",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID de la organización",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID del LLM",
+      "schema": {
+       "example": "018f5c7d-9e4a-7123-8456-9abcdef01234",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuración eliminada con éxito",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Configuración de LLM eliminada exitosamente para la organización 550e8400-e29b-41d4-a716-446655440000 y LLM 018f5c7d-9e4a-7123-8456-9abcdef01234"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuración no encontrada"
+     }
+    },
+    "summary": "Eliminar configuración de LLM de una organización",
+    "tags": [
+     "LLM Organization"
+    ]
+   }
+  },
+  "/db/llm-organization-config/tasks/catalog": {
+   "get": {
+    "operationId": "LlmOrganizationConfigController_getTaskCatalog",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Listar tareas de modelo admitidas",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config": {
+   "post": {
+    "description": "Cria uma nova configuração de LLM para uma tarefa específica (geração de título, classificação de domínio, etc.) em uma organização.",
+    "operationId": "LlmOrganizationConfigController_create",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateLlmOrganizationConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Configuração criada com sucesso",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Dados inválidos"
+     },
+     "404": {
+      "description": "Organização ou LLM não encontrado"
+     }
+    },
+    "summary": "Criar configuração de LLM para tarefa de organização",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   },
+   "get": {
+    "description": "Retorna todas as configurações de LLM por organização.",
+    "operationId": "LlmOrganizationConfigController_findAll",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Lista de configurações",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganizationConfig"
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Listar todas as configurações",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/organization/{organizationId}": {
+   "get": {
+    "description": "Retorna todas as configurações de tarefas LLM para uma organização específica.",
+    "operationId": "LlmOrganizationConfigController_findByOrganization",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID da organização",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de configurações da organização",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganizationConfig"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Organização não encontrada"
+     }
+    },
+    "summary": "Listar configurações de uma organização",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/organization/{organizationId}/llm/{llmId}": {
+   "get": {
+    "description": "Retorna todas as configurações de tarefas para um LLM específico em uma organização.",
+    "operationId": "LlmOrganizationConfigController_findByOrganizationAndLlm",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID da organização",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID do LLM",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440001",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de configurações da organização para o LLM",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganizationConfig"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Organização não encontrada"
+     }
+    },
+    "summary": "Listar configurações de uma organização para um LLM específico",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/organization/{organizationId}/task/{taskType}": {
+   "get": {
+    "description": "Retorna a configuração de uma tarefa específica para uma organização.",
+    "operationId": "LlmOrganizationConfigController_findByOrganizationAndTask",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID da organização",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "taskType",
+      "required": true,
+      "in": "path",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference",
+      "schema": {
+       "example": "title_generation",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuração encontrada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuração não encontrada"
+     }
+    },
+    "summary": "Obter configuração específica por organização e tarefa",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/organization/{organizationId}/task/{taskType}/configs": {
+   "get": {
+    "description": "Retorna todas as configurações de uma tarefa em uma organização, ordenadas por prioridade e prontas para formar a cadeia de fallback.",
+    "operationId": "LlmOrganizationConfigController_findConfigsByOrganizationAndTask",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "taskType",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de configurações ordenadas por prioridade",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganizationConfig"
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Listar configurações ordenadas por prioridade para uma tarefa",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/organization/{organizationId}/llm/{llmId}/task/{taskType}": {
+   "get": {
+    "description": "Retorna a configuração de uma tarefa específica para um LLM em uma organização.",
+    "operationId": "LlmOrganizationConfigController_findByOrganizationLlmAndTask",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID da organização",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID do LLM",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440001",
+       "type": "string"
+      }
+     },
+     {
+      "name": "taskType",
+      "required": true,
+      "in": "path",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference",
+      "schema": {
+       "example": "title_generation",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuração encontrada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuração não encontrada"
+     }
+    },
+    "summary": "Obter configuração específica por organização, LLM e tarefa",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   },
+   "put": {
+    "description": "Cria uma nova configuração ou atualiza uma existente para a combinação organização/LLM/tarefa.",
+    "operationId": "LlmOrganizationConfigController_upsert",
+    "parameters": [
+     {
+      "name": "organizationId",
+      "required": true,
+      "in": "path",
+      "description": "ID da organização",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     },
+     {
+      "name": "llmId",
+      "required": true,
+      "in": "path",
+      "description": "ID do LLM",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440001",
+       "type": "string"
+      }
+     },
+     {
+      "name": "taskType",
+      "required": true,
+      "in": "path",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference",
+      "schema": {
+       "example": "title_generation",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuração criada ou atualizada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Organização ou LLM não encontrado"
+     }
+    },
+    "summary": "Criar ou atualizar configuração (upsert)",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/task/{taskType}": {
+   "get": {
+    "description": "Retorna todas as organizações que têm configuração para um tipo de tarefa específico.",
+    "operationId": "LlmOrganizationConfigController_findByTaskType",
+    "parameters": [
+     {
+      "name": "taskType",
+      "required": true,
+      "in": "path",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference",
+      "schema": {
+       "example": "title_generation",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Lista de configurações",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LlmOrganizationConfig"
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Listar configurações por tipo de tarefa",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/db/llm-organization-config/{id}": {
+   "get": {
+    "description": "Retorna uma configuração específica pelo seu ID.",
+    "operationId": "LlmOrganizationConfigController_findOne",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "description": "ID da configuração",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuração encontrada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuração não encontrada"
+     }
+    },
+    "summary": "Obter configuração por ID",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   },
+   "put": {
+    "description": "Atualiza uma configuração existente.",
+    "operationId": "LlmOrganizationConfigController_update",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "description": "ID da configuração",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateLlmOrganizationConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Configuração atualizada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LlmOrganizationConfig"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuração não encontrada"
+     }
+    },
+    "summary": "Atualizar configuração",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   },
+   "delete": {
+    "description": "Remove uma configuração existente.",
+    "operationId": "LlmOrganizationConfigController_remove",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "description": "ID da configuração",
+      "schema": {
+       "example": "550e8400-e29b-41d4-a716-446655440000",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Configuração removida",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Configuração 550e8400-e29b-41d4-a716-446655440000 removida com sucesso"
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Configuração não encontrada"
+     }
+    },
+    "summary": "Remover configuração",
+    "tags": [
+     "LLM Organization Config"
+    ]
+   }
+  },
+  "/auth/tenant-branding": {
+   "get": {
+    "operationId": "AuthController_getTenantBranding",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "assistantName": "Denes",
+          "assistantLogoUrl": "https://cdn.example.com/denes.png",
+          "assistantSlogan": "Tu asistente inteligente para construir mejor."
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Obtener identidad pública del asistente para el tenant actual",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/login": {
+   "post": {
+    "description": "Autenticar al usuario y devolver JWT + refresh token en cookies HttpOnly. Si remember=true, la sesión podrá mantenerse por 30 días.",
+    "operationId": "AuthController_login",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LoginDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Login exitoso",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Login exitoso",
+          "user": {
+           "publicId": "018f5c7d9e4a123456789abcdef0",
+           "email": "john.doe@example.com",
+           "role": "user"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Credenciales inválidas"
+     }
+    },
+    "summary": "Usuario login",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/refresh": {
+   "post": {
+    "operationId": "AuthController_refresh",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/logout": {
+   "post": {
+    "description": "Limpiar la cookie de token de acceso HttpOnly",
+    "operationId": "AuthController_logout",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Logged out"
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Cerrar sesión de usuario",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/sessions/revoke-others": {
+   "post": {
+    "description": "Cierra todas las sesiones activas del usuario, excepto la actual.",
+    "operationId": "AuthController_revokeOtherSessions",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Se cerraron las demás sesiones.",
+          "closedSessions": 2
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Cerrar las demás sesiones del usuario",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/register": {
+   "post": {
+    "deprecated": true,
+    "description": "Responde 410 AUTH_LEGACY_ROUTE_RETIRED salvo AUTH_LEGACY_REGISTER_ENABLED=true. El registro de visitantes usa /auth/signup/*.",
+    "operationId": "AuthController_register",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterLocalDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "User registered successfully"
+     },
+     "409": {
+      "description": "Local account already exists"
+     },
+     "410": {
+      "description": "AUTH_LEGACY_ROUTE_RETIRED: la ruta ya no está disponible"
+     }
+    },
+    "summary": "Registro de usuario local (retirado)",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/activate": {
+   "post": {
+    "operationId": "AuthController_activateAccount",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ActivateAccountDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Account activated successfully"
+     },
+     "400": {
+      "description": "Invalid or expired token"
+     }
+    },
+    "summary": "Activar cuenta local mediante token de invitación",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/forgot-password": {
+   "post": {
+    "description": "Si la cuenta local existe, se enviará un enlace para restablecer la contraseña.",
+    "operationId": "AuthController_forgotPassword",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "example": {
+         "email": "user@example.com"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Respuesta genérica",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Si la cuenta existe, se ha enviado un enlace para restablecer la contraseña."
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Solicitar recuperación de contraseña",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/reset-password": {
+   "post": {
+    "description": "Restablece la contraseña usando el token enviado por correo.",
+    "operationId": "AuthController_resetPassword",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "example": {
+         "token": "raw_token_from_email",
+         "newPassword": "NewStrongPassword123!"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Contraseña actualizada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Password reset successfully"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Token inválido o expirado"
+     }
+    },
+    "summary": "Restablecer contraseña",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/change-password": {
+   "patch": {
+    "description": "Permite al usuario autenticado cambiar su contraseña actual.",
+    "operationId": "AuthController_changePassword",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "example": {
+         "currentPassword": "OldPassword123!",
+         "newPassword": "NewStrongPassword456!"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Contraseña cambiada",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "message": "Password changed successfully"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Contraseña actual incorrecta"
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Cambiar contraseña",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/me": {
+   "get": {
+    "description": "Devuelve la información del usuario autenticado desde la cookie JWT.",
+    "operationId": "AuthController_getMe",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Perfil del usuario autenticado",
+      "content": {
+       "application/json": {
+        "example": {
+         "identity": {
+          "id": "018f5c7d9e4a123456789abcdef0",
+          "nombre": "John Doe",
+          "correo": "john.doe@example.com",
+          "rol": "admin",
+          "idioma": "auto",
+          "bio": ""
+         },
+         "tenant": {
+          "id": "org_123456",
+          "publicId": "0f4221bc-20af-4f10-9a9f-409c128ee880",
+          "nombre": "Mi Empresa",
+          "departamento": {
+           "id": "dept_001"
+          },
+          "dominios": [
+           {
+            "id": "domain_1",
+            "nombre": "Soporte",
+            "subdominios": [
+             {
+              "id": "sub_1",
+              "nombre": "Hardware"
+             }
+            ]
+           }
+          ]
+         },
+         "capabilities": {
+          "allowedDomains": [
+           {
+            "id": "domain_1",
+            "code": "SUPPORT",
+            "name": "Soporte",
+            "graphNode": "support_node",
+            "agentCode": "support_agent",
+            "agentId": "agent_123"
+           }
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Obtener usuario actual",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/terms/accept": {
+   "post": {
+    "operationId": "AuthController_acceptEventTerms",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AcceptEventTermsDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "400": {
+      "description": "La versión no está vigente, o los encabezados de la sesión no determinan el canal"
+     },
+     "404": {
+      "description": "La edición no pertenece a la organización de la sesión"
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Registrar la aceptación del término de uso del evento",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/terms/current": {
+   "get": {
+    "operationId": "AuthController_getCurrentEventTerms",
+    "parameters": [
+     {
+      "name": "locale",
+      "required": false,
+      "in": "query",
+      "description": "Idioma preferido (es-PY, pt-BR). Si no está disponible, responde el primero de availableLocales",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Texto vigente del término, en el idioma disponible"
+     },
+     "404": {
+      "description": "La organización no es de evento, no hay edición corriente o no hay término vigente"
+     }
+    },
+    "security": [
+     {
+      "access_token": []
+     }
+    ],
+    "summary": "Leer el texto del término de uso vigente del evento",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/microsoft/redirect": {
+   "get": {
+    "operationId": "AuthController_microsoftAuth",
+    "parameters": [
+     {
+      "name": "callbackUrl",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "remember",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/microsoft/callback": {
+   "get": {
+    "operationId": "AuthController_microsoftCallback",
+    "parameters": [
+     {
+      "name": "code",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "state",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/microsoft/logout": {
+   "get": {
+    "description": "Elimina la cookie local y destruye la sesión activa de Microsoft",
+    "operationId": "AuthController_logoutMicrosoft",
+    "parameters": [
+     {
+      "name": "callbackUrl",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Cerrar sesión de Microsoft",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/microsoft/redirect": {
+   "get": {
+    "operationId": "AuthController_microsoftRedirect",
+    "parameters": [
+     {
+      "name": "orgSlug",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "callbackUrl",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "remember",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/microsoft/callback": {
+   "get": {
+    "operationId": "AuthController_microsoftCallbackByOrg",
+    "parameters": [
+     {
+      "name": "code",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "state",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/microsoft/global/redirect": {
+   "get": {
+    "operationId": "AuthController_microsoftGlobalRedirect",
+    "parameters": [
+     {
+      "name": "callbackUrl",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "remember",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/microsoft/global/callback": {
+   "get": {
+    "operationId": "AuthController_microsoftGlobalCallback",
+    "parameters": [
+     {
+      "name": "code",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "state",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/login-config": {
+   "get": {
+    "description": "Pública. `signup` indica si la organización admite autorregistro de visitantes y por qué métodos; fuera del contexto `organization` siempre es `enabled: false`.",
+    "operationId": "TenantAwareAuthController_loginConfig",
+    "parameters": [
+     {
+      "name": "client",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "chat",
+        "admin",
+        "events"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "context": "organization",
+          "organization": {
+           "publicId": "0f4221bc-20af-4f10-9a9f-409c128ee880",
+           "slug": "expo",
+           "name": "Expo",
+           "logoUrl": ""
+          },
+          "methods": {
+           "email": true,
+           "microsoft": false,
+           "google": true
+          },
+          "signup": {
+           "enabled": true,
+           "methods": {
+            "email": true,
+            "google": true
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "summary": "Métodos de inicio de sesión y disponibilidad de registro",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/{provider}/start": {
+   "get": {
+    "operationId": "TenantAwareAuthController_oauthStart",
+    "parameters": [
+     {
+      "name": "provider",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "organizationSlug",
+      "required": false,
+      "in": "query",
+      "description": "Obligatorio para Microsoft y opcional como contexto para Google.",
+      "schema": {
+       "example": "tecnoedil",
+       "type": "string"
+      }
+     },
+     {
+      "name": "client",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "chat",
+        "admin",
+        "events"
+       ]
+      }
+     },
+     {
+      "name": "returnTo",
+      "required": false,
+      "in": "query",
+      "schema": {
+       "example": "/",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/oauth/{provider}/callback": {
+   "get": {
+    "operationId": "TenantAwareAuthController_oauthCallback",
+    "parameters": [
+     {
+      "name": "provider",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "code",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "state",
+      "required": true,
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/bridge/exchange": {
+   "post": {
+    "operationId": "TenantAwareAuthController_bridgeExchange",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BridgeExchangeDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/terms": {
+   "get": {
+    "description": "Pública. La organización se resuelve por el host o por los encabezados X-Tenant-Host y X-Tenant-Slug. Responde el mismo formato que GET /auth/terms/current.",
+    "operationId": "SignupController_terms",
+    "parameters": [
+     {
+      "name": "locale",
+      "required": false,
+      "in": "query",
+      "description": "Idioma preferido (es-PY, pt-BR). Si no está disponible, responde el primero de availableLocales",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Texto vigente del término, en el idioma disponible"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (no es de evento, sin edición corriente, sin término vigente o sin departamento \"Visitante\")"
+     },
+     "429": {
+      "description": "AUTH_RATE_LIMITED: demasiadas lecturas de la misma organización en la hora"
+     }
+    },
+    "summary": "Leer el término de uso vigente antes de crear la cuenta",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/email/start": {
+   "post": {
+    "description": "Pública. Envía un código de 6 dígitos al correo, en el idioma elegido. Responde 202 con el mismo formato exista o no una cuenta con ese correo.",
+    "operationId": "SignupController_startEmail",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StartEmailSignupDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "{ signupId, expiresIn: 900, resendAfter: 60 }"
+     },
+     "400": {
+      "description": "Cuerpo inválido (incluye locale ausente o fuera de es-PY/pt-BR)"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (o el método está deshabilitado)"
+     },
+     "429": {
+      "description": "AUTH_RATE_LIMITED (demasiados intentos con el mismo correo) o SIGNUP_CAPACITY_REACHED (la edición alcanzó su tope de registros por hora o por día). Ambos con retryAfter en segundos y encabezado Retry-After"
+     },
+     "503": {
+      "description": "AUTH_RATE_LIMIT_UNAVAILABLE (control de intentos o estado temporal no disponible) o SIGNUP_EMAIL_DELIVERY_FAILED (no fue posible enviar el correo)"
+     }
+    },
+    "summary": "Iniciar el registro con correo y contraseña",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/email/resend": {
+   "post": {
+    "description": "Pública. Mínimo 60 s entre envíos y hasta 3 reenvíos por solicitud. Con locale, el nuevo correo sale en ese idioma.",
+    "operationId": "SignupController_resendEmail",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResendEmailSignupDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "{ signupId, expiresIn: 900, resendAfter: 60 }"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (o el método está deshabilitado)"
+     },
+     "410": {
+      "description": "SIGNUP_EXPIRED: la solicitud venció o ya no es válida"
+     },
+     "429": {
+      "description": "SIGNUP_RESEND_TOO_SOON (retryAfter y Retry-After) o SIGNUP_RESEND_LIMIT_REACHED"
+     },
+     "503": {
+      "description": "AUTH_RATE_LIMIT_UNAVAILABLE o SIGNUP_EMAIL_DELIVERY_FAILED"
+     }
+    },
+    "summary": "Reenviar el código de registro",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/email/verify": {
+   "post": {
+    "description": "Pública. Hasta 5 intentos por solicitud; el siguiente responde 410. Con el código correcto devuelve el boleto de registro.",
+    "operationId": "SignupController_verifyEmail",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VerifyEmailSignupDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "{ signupTicket, expiresIn: 900, profile: { name, email } }"
+     },
+     "400": {
+      "description": "SIGNUP_CODE_INVALID (con attemptsRemaining) o cuerpo inválido"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (o el método está deshabilitado)"
+     },
+     "409": {
+      "description": "ACCOUNT_ALREADY_EXISTS (misma organización) o ACCOUNT_ORGANIZATION_CONFLICT (otra organización)"
+     },
+     "410": {
+      "description": "SIGNUP_EXPIRED: solicitud vencida, agotada, ya usada o inexistente"
+     },
+     "503": {
+      "description": "AUTH_RATE_LIMIT_UNAVAILABLE: control de intentos o estado temporal no disponible"
+     }
+    },
+    "summary": "Verificar el código de registro",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/complete": {
+   "post": {
+    "description": "Pública. Registra la aceptación, crea la cuenta y devuelve el código de puente { code, expiresIn } que se canjea en POST /auth/bridge/exchange.",
+    "operationId": "SignupController_complete",
+    "parameters": [
+     {
+      "name": "X-Client-Platform",
+      "in": "header",
+      "description": "ios o android; obligatorio con X-Client-App: mobile",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "X-Client-App",
+      "in": "header",
+      "description": "chat (web) o mobile (app)",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CompleteSignupDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "{ code, expiresIn }"
+     },
+     "400": {
+      "description": "SIGNUP_CHANNEL_UNRESOLVED (encabezados de canal) o cuerpo inválido (incluye remember ausente)"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (o el método está deshabilitado)"
+     },
+     "409": {
+      "description": "TERMS_VERSION_CHANGED, ACCOUNT_ALREADY_EXISTS o ACCOUNT_ORGANIZATION_CONFLICT"
+     },
+     "410": {
+      "description": "SIGNUP_TICKET_INVALID: boleto vencido, ya usado o inexistente"
+     },
+     "429": {
+      "description": "SIGNUP_CAPACITY_REACHED: la edición alcanzó su tope de registros por hora o por día (retryAfter y encabezado Retry-After)"
+     },
+     "503": {
+      "description": "AUTH_RATE_LIMIT_UNAVAILABLE: control de intentos o estado temporal no disponible"
+     }
+    },
+    "summary": "Aceptar el término y crear la cuenta",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/signup/cancel": {
+   "post": {
+    "description": "Pública. Descarta el boleto; no se crea cuenta ni aceptación. Responde 204 exista o no el boleto.",
+    "operationId": "SignupController_cancel",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CancelSignupDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Boleto descartado"
+     },
+     "404": {
+      "description": "SIGNUP_NOT_AVAILABLE: la organización no admite registro (o el método está deshabilitado)"
+     },
+     "503": {
+      "description": "AUTH_RATE_LIMIT_UNAVAILABLE: control de intentos o estado temporal no disponible"
+     }
+    },
+    "summary": "Rechazar el término y descartar el registro",
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/sso-invitations/resolve": {
+   "get": {
+    "operationId": "PublicSsoInvitationController_resolve",
+    "parameters": [
+     {
+      "name": "token",
+      "required": true,
+      "in": "query",
+      "description": "Token opaco de la invitación.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Resolver una invitación SSO opaca",
+    "tags": [
+     "Public SSO invitations"
+    ]
+   }
+  },
+  "/auth/access-requests/status": {
+   "get": {
+    "operationId": "PublicPlatformAccessController_status",
+    "parameters": [
+     {
+      "name": "x-access-request-ticket",
+      "required": true,
+      "in": "header",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "tags": [
+     "Auth"
+    ]
+   }
+  },
+  "/auth/account-migration/google/start": {
+   "post": {
+    "operationId": "PlatformGoogleAccountMigrationController_start",
+    "parameters": [],
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "summary": "Migrar una cuenta local vinculada a Google",
+    "tags": [
+     "Platform authentication"
+    ]
+   }
+  },
+  "/workspace": {
+   "post": {
+    "operationId": "WorkspaceController_create",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateWorkspaceDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "summary": "Crear un proyecto (workspace)",
+    "tags": [
+     "workspace"
+    ]
+   },
+   "get": {
+    "operationId": "WorkspaceController_list",
+    "parameters": [
+     {
+      "name": "mine",
+      "required": false,
+      "in": "query",
+      "description": "Listar solo los proyectos del usuario actual",
+      "schema": {
+       "type": "boolean"
+      }
+     },
+     {
+      "name": "organizationId",
+      "required": false,
+      "in": "query",
+      "description": "Filtrar por organización (solo root; los demás usan la organización del token)",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "page",
+      "required": false,
+      "in": "query",
+      "description": "Página",
+      "schema": {
+       "default": 1,
+       "type": "number"
+      }
+     },
+     {
+      "name": "limit",
+      "required": false,
+      "in": "query",
+      "description": "Límite",
+      "schema": {
+       "default": 20,
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Listar proyectos (?mine = los del usuario actual; sin mine, rol admin lista los de la organización)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}": {
+   "get": {
+    "operationId": "WorkspaceController_findOne",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Obtener un proyecto (el propietario recibe el payload completo; admin no propietario, sin memoria)",
+    "tags": [
+     "workspace"
+    ]
+   },
+   "patch": {
+    "operationId": "WorkspaceController_update",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateWorkspaceDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Actualizar nombre/descripción del proyecto",
+    "tags": [
+     "workspace"
+    ]
+   },
+   "delete": {
+    "operationId": "WorkspaceController_remove",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": ""
+     }
+    },
+    "summary": "Eliminar un proyecto (borrado lógico)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/prompt-config": {
+   "put": {
+    "operationId": "WorkspaceController_upsertPromptConfig",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpsertWorkspacePromptConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Guardar las instrucciones del proyecto (upsert 1:1)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/connections/domain": {
+   "post": {
+    "operationId": "WorkspaceController_connectDomain",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ConnectWorkspaceDomainDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "summary": "Conectar un dominio del acervo al proyecto (idempotente: repetir devuelve la conexión existente con 200)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/connections/domain/{agentDomainId}": {
+   "delete": {
+    "operationId": "WorkspaceController_disconnectDomain",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "agentDomainId",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": ""
+     }
+    },
+    "summary": "Desconectar un dominio del proyecto (idempotente: conexión inexistente también responde 204)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/connections/rag-project": {
+   "post": {
+    "operationId": "WorkspaceController_connectRagProject",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ConnectWorkspaceRagProjectDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "summary": "Conectar un proyecto RAG SQL (máximo 1 por proyecto en el MVP; idempotente para la misma conexión)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/connections/rag-project/{ragProjectId}": {
+   "delete": {
+    "operationId": "WorkspaceController_disconnectRagProject",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "ragProjectId",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": ""
+     }
+    },
+    "summary": "Desconectar el proyecto RAG SQL (idempotente: conexión inexistente también responde 204)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/notes": {
+   "post": {
+    "operationId": "WorkspaceController_createNote",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateWorkspaceNoteDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": ""
+     }
+    },
+    "summary": "Crear una nota del proyecto (solo el propietario)",
+    "tags": [
+     "workspace"
+    ]
+   },
+   "get": {
+    "operationId": "WorkspaceController_listNotes",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": ""
+     }
+    },
+    "summary": "Listar las notas del proyecto (solo el propietario)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/workspace/{id}/notes/{noteId}": {
+   "delete": {
+    "operationId": "WorkspaceController_deleteNote",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "noteId",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": ""
+     }
+    },
+    "summary": "Eliminar una nota del proyecto (propietario o admin)",
+    "tags": [
+     "workspace"
+    ]
+   }
+  },
+  "/file-upload": {
+   "get": {
+    "operationId": "FileUploadsController_list",
+    "parameters": [
+     {
+      "name": "page",
+      "required": false,
+      "in": "query",
+      "description": "Page number",
+      "schema": {
+       "minimum": 1,
+       "default": 1,
+       "example": 1,
+       "type": "number"
+      }
+     },
+     {
+      "name": "limit",
+      "required": false,
+      "in": "query",
+      "description": "Items per page",
+      "schema": {
+       "minimum": 1,
+       "maximum": 100,
+       "default": 20,
+       "example": 20,
+       "type": "number"
+      }
+     },
+     {
+      "name": "purpose",
+      "required": false,
+      "in": "query",
+      "description": "Filter by purpose",
+      "schema": {
+       "example": "DOCUMENT",
+       "type": "string",
+       "enum": [
+        "DOCUMENT",
+        "USER_AVATAR",
+        "ORGANIZATION_LOGO",
+        "ASSISTANT_LOGO"
+       ]
+      }
+     },
+     {
+      "name": "status",
+      "required": false,
+      "in": "query",
+      "description": "Filter by status",
+      "schema": {
+       "example": "AVAILABLE",
+       "type": "string",
+       "enum": [
+        "UPLOADING",
+        "UPLOADED_LOCAL",
+        "SYNCING_R2",
+        "AVAILABLE",
+        "INDEXED",
+        "ERROR",
+        "CANCELED",
+        "EXPIRED"
+       ]
+      }
+     },
+     {
+      "name": "agentDomainId",
+      "required": false,
+      "in": "query",
+      "description": "Filter by AgentDomain id (only for DOCUMENT)",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "organizationId",
+      "required": false,
+      "in": "query",
+      "description": "Filter by organizationId (must match user organization)",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "search",
+      "required": false,
+      "in": "query",
+      "description": "Search by original filename (contains)",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "workspaceId",
+      "required": false,
+      "in": "query",
+      "description": "Archivos de un proyecto (Proyectos — D30)",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "parentFileUploadId",
+      "required": false,
+      "in": "query",
+      "description": "Adjuntos (hijos) de un documento (D36)",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedFileUploadResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Listar uploads (paginado)",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/bulk/domain": {
+   "patch": {
+    "operationId": "FileUploadsController_bulkChangeDomain",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BulkChangeDomainDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Cambia el dominio de uno o más archivos indexados sin regenerar embeddings",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BulkChangeDomainResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Cambiar dominio de múltiples archivos indexados",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}": {
+   "patch": {
+    "operationId": "FileUploadsController_updateLink",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateFileUploadLinkDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Vincula el archivo como adjunto de un documento del mismo proyecto (parentFileUploadId) o lo desvincula (null). Depth-1, sin ciclos.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadLinkResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Vincular/desvincular archivo a un documento padre (Proyectos — D36)",
+    "tags": [
+     "File Uploads"
+    ]
+   },
+   "get": {
+    "operationId": "FileUploadsController_getById",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "id": "uuid",
+          "organizationId": "uuid",
+          "agentDomainId": "uuid | null",
+          "purpose": "DOCUMENT",
+          "status": "UPLOADED_LOCAL",
+          "bytesWritten": 1048576,
+          "sizeBytes": 5242880,
+          "r2Url": "https://... | null",
+          "syncError": "string | null",
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-01-01T00:00:00.000Z"
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Consultar status do upload",
+    "tags": [
+     "File Uploads"
+    ]
+   },
+   "delete": {
+    "operationId": "FileUploadsController_remove",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "id": "uuid"
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Apagar upload",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/preview": {
+   "get": {
+    "operationId": "FileUploadsController_preview",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Markdown del documento leído del R2 y sanitizado en el servidor. 404 mientras el archivo se está procesando (markdown ausente).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadPreviewResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Vista previa del documento de proyecto (markdown sanitizado — D40/D34)",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/indexing-config": {
+   "post": {
+    "operationId": "FileUploadsController_createIndexingConfig",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateFileUploadIndexingConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadIndexingConfigResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Crear configuracion de indexacion para un upload",
+    "tags": [
+     "File Uploads"
+    ]
+   },
+   "get": {
+    "operationId": "FileUploadsController_getIndexingConfig",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadIndexingConfigResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Obtener configuracion de indexacion para un upload",
+    "tags": [
+     "File Uploads"
+    ]
+   },
+   "patch": {
+    "operationId": "FileUploadsController_updateIndexingConfig",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateFileUploadIndexingConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadIndexingConfigResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Actualizar configuracion de indexacion para un upload",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/indexing-retry": {
+   "post": {
+    "operationId": "FileUploadsController_retryIndexing",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateFileUploadIndexingConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Actualiza opcionalmente la configuracion, limpia el estado de error y vuelve a poner el archivo en cola para KIP.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadIndexingConfigResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reintentar una indexacion fallida o cancelada con la configuracion actual",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/retry": {
+   "post": {
+    "operationId": "FileUploadsController_retry",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "id": "uuid",
+          "status": "UPLOADED_LOCAL"
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reenviar upload com erro para sincronizacao",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/cancel": {
+   "post": {
+    "operationId": "FileUploadsController_cancel",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "example": {
+          "id": "uuid",
+          "status": "CANCELED"
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Cancelar upload incompleto e limpar registros temporarios",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  },
+  "/file-upload/{id}/reindex": {
+   "post": {
+    "operationId": "FileUploadsController_reindex",
+    "parameters": [
+     {
+      "name": "id",
+      "required": true,
+      "in": "path",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateFileUploadIndexingConfigDto"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Limpia embeddings antiguos y reinicia el proceso de indexacion. Si se proporciona un body, actualiza la configuracion antes de reindexar.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadIndexingConfigResponseDto"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reindexar archivo existente, opcionalmente con nueva configuracion",
+    "tags": [
+     "File Uploads"
+    ]
+   }
+  }
+ },
+ "info": {
+  "title": "aiKuaa Admin API — subconjunto mobile",
+  "description": "Subconjunto das rotas que o app movel consome. Gerado do codigo em 2026-09-20. ATENCAO: a maioria das rotas /auth NAO declara schema de resposta 2xx — os corpos de resposta estao no docs/chat-web/integracao-mobile.md, secoes 4.x e 11. Os corpos de REQUISICAO sao confiaveis (vem dos DTOs class-validator).",
+  "version": "dump",
+  "contact": {}
+ },
+ "tags": [],
+ "servers": [],
+ "components": {
+  "securitySchemes": {
+   "access_token": {
+    "scheme": "bearer",
+    "bearerFormat": "JWT",
+    "type": "http",
+    "in": "header"
+   },
+   "internal-api-key": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "x-api-key"
+   }
+  },
+  "schemas": {
+   "UserResponseDto": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "number",
+      "description": "User internal ID",
+      "example": 1
+     },
+     "publicId": {
+      "type": "string",
+      "description": "User public ID (UUID v7)",
+      "example": "018f-5c7d-9e4a-1234-5678-9abc-def0"
+     },
+     "name": {
+      "type": "string",
+      "description": "User name",
+      "example": "John Doe"
+     },
+     "email": {
+      "type": "string",
+      "description": "User email",
+      "example": "john.doe@example.com"
+     },
+     "provider": {
+      "type": "string",
+      "description": "Authentication provider",
+      "example": "email"
+     },
+     "credentialAuthority": {
+      "type": "string",
+      "enum": [
+       "EMAIL",
+       "MICROSOFT",
+       "GOOGLE",
+       "OIDC"
+      ],
+      "example": "EMAIL"
+     },
+     "avatarSource": {
+      "type": "string",
+      "enum": [
+       "LOCAL",
+       "GOOGLE",
+       "MICROSOFT"
+      ],
+      "example": "LOCAL"
+     },
+     "authProviders": {
+      "description": "Authentication methods currently linked to the user",
+      "example": [
+       "email",
+       "google"
+      ],
+      "type": "array",
+      "items": {
+       "type": "array"
+      }
+     },
+     "providerId": {
+      "type": "string",
+      "description": "Provider ID",
+      "example": "email-12345"
+     },
+     "role": {
+      "type": "object",
+      "description": "User role",
+      "example": {
+       "id": "uuid",
+       "name": "user"
+      }
+     },
+     "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp number",
+      "example": "+5511999999999"
+     },
+     "avatar": {
+      "type": "string",
+      "description": "Avatar URL",
+      "example": "https://example.com/avatar.jpg"
+     },
+     "customChatInstructions": {
+      "type": "object",
+      "description": "Global custom chat instructions",
+      "example": "Responde breve y evita tablas salvo que las pida.",
+      "nullable": true
+     },
+     "lastLogin": {
+      "format": "date-time",
+      "type": "string",
+      "description": "Last login date",
+      "example": "2023-10-13T12:00:00Z"
+     },
+     "isActive": {
+      "type": "boolean",
+      "description": "User is active",
+      "example": true
+     },
+     "isDeleted": {
+      "type": "boolean",
+      "description": "User was deleted",
+      "example": false
+     },
+     "isVerified": {
+      "type": "boolean",
+      "description": "User is verified",
+      "example": true
+     },
+     "isPremium": {
+      "type": "boolean",
+      "description": "User is premium",
+      "example": false
+     },
+     "canAccessEvents": {
+      "type": "boolean",
+      "description": "User is authorized to manage the aiKuaa Events platform",
+      "example": false
+     },
+     "createdAt": {
+      "format": "date-time",
+      "type": "string",
+      "description": "Creation date",
+      "example": "2023-10-13T12:00:00Z"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "type": "string",
+      "description": "Last update date",
+      "example": "2023-10-13T12:00:00Z"
+     },
+     "llmUser": {
+      "type": "array",
+      "description": "LLMs associated with user",
+      "example": []
+     }
+    },
+    "required": [
+     "id",
+     "publicId",
+     "name",
+     "email",
+     "provider",
+     "credentialAuthority",
+     "avatarSource",
+     "authProviders",
+     "providerId",
+     "role",
+     "whatsapp",
+     "avatar",
+     "lastLogin",
+     "isActive",
+     "isDeleted",
+     "isVerified",
+     "isPremium",
+     "canAccessEvents",
+     "createdAt",
+     "updatedAt",
+     "llmUser"
+    ]
+   },
+   "UpdateProfileDto": {
+    "type": "object",
+    "properties": {
+     "bio": {
+      "type": "string",
+      "description": "User bio/description",
+      "example": "Software developer passionate about AI"
+     },
+     "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp number in international format",
+      "example": "+5511999999999"
+     },
+     "idioma": {
+      "type": "string",
+      "description": "Preferred language for communication",
+      "example": "auto",
+      "enum": [
+       "auto",
+       "es",
+       "pt",
+       "en"
+      ]
+     },
+     "avatar": {
+      "type": "string",
+      "description": "Avatar URL",
+      "example": "https://example.com/avatar.jpg"
+     },
+     "customChatInstructions": {
+      "type": "object",
+      "description": "Global custom instructions for the chat assistant. Applied to all user conversations.",
+      "example": "Responde breve, prioriza ejemplos de código y háblame en español.",
+      "nullable": true,
+      "maxLength": 1200
+     }
+    }
+   },
+   "CreateLlmOrganizationDto": {
+    "type": "object",
+    "properties": {
+     "organizationId": {
+      "type": "string",
+      "description": "ID de la organización",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "llmId": {
+      "type": "string",
+      "description": "ID del LLM",
+      "example": "018f5c7d-9e4a-7123-8456-9abcdef01234"
+     },
+     "apiKey": {
+      "type": "string",
+      "description": "API Key del proveedor LLM para esta organización. Puede estar vacía o tener diferentes formatos según el proveedor.",
+      "example": "sk-proj-abc123xyz789..."
+     }
+    },
+    "required": [
+     "organizationId",
+     "llmId"
+    ]
+   },
+   "LlmOrganization": {
+    "type": "object",
+    "properties": {
+     "organizationId": {
+      "type": "string",
+      "description": "ID de la organización",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "llmId": {
+      "type": "string",
+      "description": "ID del LLM",
+      "example": "018f5c7d-9e4a-7123-8456-9abcdef01234"
+     },
+     "organization": {
+      "type": "object",
+      "description": "Información de la organización"
+     },
+     "llm": {
+      "type": "object",
+      "description": "Información del LLM"
+     }
+    },
+    "required": [
+     "organizationId",
+     "llmId"
+    ]
+   },
+   "ImportLlmOrganizationDto": {
+    "type": "object",
+    "properties": {
+     "sourceOrganizationId": {
+      "type": "string",
+      "description": "ID de la organización de origen, la que ya tiene los modelos",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "targetOrganizationId": {
+      "type": "string",
+      "description": "ID de la organización de destino, la que recibe los modelos",
+      "example": "8881f9d5-c6ab-45a6-94fb-8f46ea9f757b"
+     },
+     "llmIds": {
+      "description": "IDs de los modelos a importar desde la organización de origen",
+      "example": [
+       "018f5c7d-9e4a-7123-8456-9abcdef01234"
+      ],
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "overwriteExisting": {
+      "type": "boolean",
+      "description": "Cuando es true, reemplaza la clave API y las configuraciones por tarea que ya existan en la organización de destino. Por defecto los modelos ya asignados se omiten sin tocar nada.",
+      "example": false,
+      "default": false
+     }
+    },
+    "required": [
+     "sourceOrganizationId",
+     "targetOrganizationId",
+     "llmIds"
+    ]
+   },
+   "UpdateLlmOrganizationDto": {
+    "type": "object",
+    "properties": {
+     "apiKey": {
+      "type": "string",
+      "description": "Nueva API Key del proveedor LLM para esta organización. Puede estar vacía o tener diferentes formatos según el proveedor.",
+      "example": "sk-proj-xyz789abc123..."
+     }
+    }
+   },
+   "CreateLlmOrganizationConfigDto": {
+    "type": "object",
+    "properties": {
+     "organizationId": {
+      "type": "string",
+      "description": "ID da organização",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "taskType": {
+      "type": "string",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference, rag_turn_planning, rag_sql_synthesis, composition_source_planning, document_source_planning. Las dos tareas de planificación de fuentes requieren un LLM orquestador con salida estructurada estricta y vinculado a la organización con credencial.",
+      "example": "title_generation"
+     },
+     "llmId": {
+      "type": "string",
+      "description": "ID do LLM a ser usado (null = modelo principal)",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "customPrompt": {
+      "type": "string",
+      "description": "Prompt customizado para a tarefa",
+      "example": "Gere um título curto e descritivo para esta conversa baseado na primeira mensagem do usuário."
+     },
+     "systemPrompt": {
+      "type": "string",
+      "description": "System prompt customizado",
+      "example": "Você é um assistente especializado em..."
+     },
+     "temperature": {
+      "type": "number",
+      "description": "Temperatura do modelo (0.0 a 2.0)",
+      "example": 0.1,
+      "minimum": 0,
+      "maximum": 2
+     },
+     "maxTokens": {
+      "type": "number",
+      "description": "Máximo de tokens na resposta",
+      "example": 600,
+      "minimum": 1,
+      "maximum": 32000
+     },
+     "priority": {
+      "type": "number",
+      "description": "Prioridade da configuração na task (menor = mais prioritário)",
+      "example": 100,
+      "minimum": 1,
+      "maximum": 9999
+     },
+     "timeoutSeconds": {
+      "type": "number",
+      "description": "Timeout de inferência em segundos para a task",
+      "example": 30,
+      "minimum": 5,
+      "maximum": 600
+     },
+     "isActive": {
+      "type": "boolean",
+      "description": "Se a configuração está ativa",
+      "default": true
+     }
+    },
+    "required": [
+     "organizationId",
+     "taskType"
+    ]
+   },
+   "LlmOrganizationConfigModel": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "apiUrl": {
+      "type": "string"
+     },
+     "apiId": {
+      "type": "object",
+      "nullable": true
+     },
+     "apiType": {
+      "type": "string"
+     },
+     "provider": {
+      "type": "object",
+      "nullable": true
+     },
+     "isActive": {
+      "type": "boolean"
+     },
+     "embeddingModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "imageDescriptionModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "audioModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "titleGenerationModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "summaryModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "inferenceModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "auxLLM": {
+      "type": "boolean"
+     },
+     "orchestratorModel": {
+      "type": "boolean"
+     },
+     "supportsStrictStructuredOutput": {
+      "type": "object",
+      "nullable": true
+     },
+     "supportsTemperature": {
+      "type": "object",
+      "nullable": true
+     }
+    }
+   },
+   "LlmOrganizationConfig": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "ID da configuração",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "organizationId": {
+      "type": "string",
+      "description": "ID da organização",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "taskType": {
+      "type": "string",
+      "description": "Tipo de tarefa: title_generation, domain_classification, summarization, inference",
+      "example": "title_generation"
+     },
+     "llmId": {
+      "type": "object",
+      "description": "ID do LLM a ser usado (null = modelo principal)",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "llm": {
+      "description": "Modelo global vinculado, incluyendo ruta y capacidades verificadas",
+      "nullable": true,
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LlmOrganizationConfigModel"
+       }
+      ]
+     },
+     "customPrompt": {
+      "type": "object",
+      "description": "Prompt customizado para a tarefa"
+     },
+     "priority": {
+      "type": "number",
+      "description": "Prioridade da configuração na task (menor = mais prioritário)",
+      "example": 100
+     },
+     "systemPrompt": {
+      "type": "object",
+      "description": "System prompt customizado"
+     },
+     "temperature": {
+      "type": "object",
+      "description": "Temperatura do modelo",
+      "example": 0.1
+     },
+     "maxTokens": {
+      "type": "object",
+      "description": "Máximo de tokens na resposta",
+      "example": 600
+     },
+     "timeoutSeconds": {
+      "type": "object",
+      "description": "Timeout de inferência em segundos para a task",
+      "example": 30
+     },
+     "isActive": {
+      "type": "boolean",
+      "description": "Se a configuração está ativa",
+      "example": true
+     },
+     "createdAt": {
+      "format": "date-time",
+      "type": "string",
+      "description": "Data de criação"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "type": "string",
+      "description": "Data de atualização"
+     }
+    },
+    "required": [
+     "id",
+     "organizationId",
+     "taskType",
+     "priority",
+     "isActive",
+     "createdAt",
+     "updatedAt"
+    ]
+   },
+   "UpdateLlmOrganizationConfigDto": {
+    "type": "object",
+    "properties": {
+     "llmId": {
+      "type": "string",
+      "description": "ID do LLM a ser usado (null = modelo principal)",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+     },
+     "customPrompt": {
+      "type": "string",
+      "description": "Prompt customizado para a tarefa",
+      "example": "Gere um título curto e descritivo para esta conversa baseado na primeira mensagem do usuário."
+     },
+     "systemPrompt": {
+      "type": "string",
+      "description": "System prompt customizado",
+      "example": "Você é um assistente especializado em..."
+     },
+     "temperature": {
+      "type": "number",
+      "description": "Temperatura do modelo (0.0 a 2.0)",
+      "example": 0.1,
+      "minimum": 0,
+      "maximum": 2
+     },
+     "maxTokens": {
+      "type": "number",
+      "description": "Máximo de tokens na resposta",
+      "example": 600,
+      "minimum": 1,
+      "maximum": 32000
+     },
+     "priority": {
+      "type": "number",
+      "description": "Prioridade da configuração na task (menor = mais prioritário)",
+      "example": 100,
+      "minimum": 1,
+      "maximum": 9999
+     },
+     "timeoutSeconds": {
+      "type": "number",
+      "description": "Timeout de inferência em segundos para a task",
+      "example": 30,
+      "minimum": 5,
+      "maximum": 600
+     },
+     "isActive": {
+      "type": "boolean",
+      "description": "Se a configuração está ativa",
+      "default": true
+     }
+    }
+   },
+   "LoginDto": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": "string",
+      "description": "Email del usuario",
+      "example": "john.doe@example.com"
+     },
+     "password": {
+      "type": "string",
+      "description": "Contraseña del usuario",
+      "example": "securePassword123"
+     },
+     "remember": {
+      "type": "boolean",
+      "description": "Recordar sesión por 15 días",
+      "example": false
+     },
+     "responseMode": {
+      "type": "string",
+      "enum": [
+       "legacy",
+       "bridge"
+      ]
+     },
+     "client": {
+      "type": "string",
+      "enum": [
+       "chat",
+       "admin",
+       "events"
+      ]
+     },
+     "organizationSlug": {
+      "type": "string",
+      "example": "tecnoedil"
+     },
+     "returnTo": {
+      "type": "string",
+      "example": "/"
+     }
+    },
+    "required": [
+     "email",
+     "password"
+    ]
+   },
+   "RegisterLocalDto": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": "string",
+      "example": "john.doe@example.com",
+      "description": "User email used for login"
+     },
+     "password": {
+      "type": "string",
+      "example": "StrongPassword123!",
+      "description": "User password (minimum 8 characters)",
+      "minLength": 8
+     },
+     "name": {
+      "type": "string",
+      "example": "John Doe",
+      "description": "Optional display name"
+     }
+    },
+    "required": [
+     "email",
+     "password"
+    ]
+   },
+   "ActivateAccountDto": {
+    "type": "object",
+    "properties": {
+     "token": {
+      "type": "string",
+      "example": "uuid-or-random-token",
+      "description": "Activation token received via email"
+     },
+     "password": {
+      "type": "string",
+      "example": "StrongPassword123!",
+      "description": "New password (minimum 8 characters)",
+      "minLength": 8
+     }
+    },
+    "required": [
+     "token",
+     "password"
+    ]
+   },
+   "AcceptEventTermsDto": {
+    "type": "object",
+    "properties": {
+     "edition_public_id": {
+      "type": "string",
+      "description": "publicId de la edición del término"
+     },
+     "terms_version": {
+      "type": "string",
+      "description": "Versión del término que la persona aceptó",
+      "example": "2026-11-v1"
+     },
+     "locale": {
+      "type": "string",
+      "description": "Idioma en que el término fue mostrado"
+     }
+    },
+    "required": [
+     "edition_public_id",
+     "terms_version",
+     "locale"
+    ]
+   },
+   "BridgeExchangeDto": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string",
+      "description": "Código opaco y de un solo uso."
+     },
+     "organizationSlug": {
+      "type": "string",
+      "example": "tecnoedil",
+      "description": "Obligatorio para organizaciones y ausente para el administrador global."
+     },
+     "client": {
+      "type": "string",
+      "enum": [
+       "chat",
+       "admin"
+      ]
+     }
+    },
+    "required": [
+     "code",
+     "client"
+    ]
+   },
+   "StartEmailSignupDto": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "example": "Ana Benítez",
+      "minLength": 2,
+      "maxLength": 120
+     },
+     "email": {
+      "type": "string",
+      "example": "ana@example.com",
+      "maxLength": 254
+     },
+     "password": {
+      "type": "string",
+      "description": "Contraseña (mínimo 8 caracteres). Una sola: la confirmación es de la pantalla.",
+      "minLength": 8,
+      "maxLength": 128
+     },
+     "locale": {
+      "type": "string",
+      "enum": [
+       "es-PY",
+       "pt-BR"
+      ],
+      "description": "Idioma elegido en la pantalla. Define el idioma del correo."
+     }
+    },
+    "required": [
+     "name",
+     "email",
+     "password",
+     "locale"
+    ]
+   },
+   "ResendEmailSignupDto": {
+    "type": "object",
+    "properties": {
+     "signupId": {
+      "type": "string",
+      "description": "Identificador opaco devuelto por start."
+     },
+     "locale": {
+      "type": "string",
+      "enum": [
+       "es-PY",
+       "pt-BR"
+      ],
+      "description": "Nuevo idioma elegido en la pantalla del código. Ausente, se mantiene el del pedido."
+     }
+    },
+    "required": [
+     "signupId"
+    ]
+   },
+   "VerifyEmailSignupDto": {
+    "type": "object",
+    "properties": {
+     "signupId": {
+      "type": "string",
+      "description": "Identificador opaco devuelto por start."
+     },
+     "code": {
+      "type": "string",
+      "example": "042917",
+      "description": "Código de 6 dígitos."
+     }
+    },
+    "required": [
+     "signupId",
+     "code"
+    ]
+   },
+   "CompleteSignupDto": {
+    "type": "object",
+    "properties": {
+     "signupTicket": {
+      "type": "string",
+      "description": "Boleto de registro devuelto por verify."
+     },
+     "editionPublicId": {
+      "type": "string",
+      "description": "editionPublicId del término mostrado."
+     },
+     "termsVersion": {
+      "type": "string",
+      "example": "2026-11-v1",
+      "description": "Versión del término mostrado."
+     },
+     "locale": {
+      "type": "string",
+      "enum": [
+       "es-PY",
+       "pt-BR"
+      ],
+      "description": "Idioma del texto del término en pantalla al aceptar. Prevalece sobre el del boleto."
+     },
+     "remember": {
+      "type": "boolean",
+      "description": "Casilla \"Mantener sesión iniciada\"."
+     },
+     "returnTo": {
+      "type": "string",
+      "example": "/"
+     }
+    },
+    "required": [
+     "signupTicket",
+     "editionPublicId",
+     "termsVersion",
+     "locale",
+     "remember"
+    ]
+   },
+   "CancelSignupDto": {
+    "type": "object",
+    "properties": {
+     "signupTicket": {
+      "type": "string",
+      "description": "Boleto de registro devuelto por verify."
+     }
+    },
+    "required": [
+     "signupTicket"
+    ]
+   },
+   "CreateWorkspaceDto": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "Nombre del proyecto (¿En qué estás trabajando?)"
+     },
+     "description": {
+      "type": "string",
+      "description": "Objetivo del proyecto (¿Qué quieres lograr?)"
+     },
+     "organizationId": {
+      "type": "string",
+      "description": "Organización (solo root; los demás usan la organización del token)"
+     }
+    },
+    "required": [
+     "name"
+    ]
+   },
+   "UpdateWorkspaceDto": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "Nombre del proyecto"
+     },
+     "description": {
+      "type": "string",
+      "description": "Objetivo del proyecto (cadena vacía lo borra)"
+     }
+    }
+   },
+   "UpsertWorkspacePromptConfigDto": {
+    "type": "object",
+    "properties": {
+     "systemPrompt": {
+      "type": "object",
+      "description": "Instrucciones del proyecto"
+     },
+     "guardrailPrompt": {
+      "type": "object",
+      "description": "Prompt de guardrails del proyecto"
+     }
+    }
+   },
+   "ConnectWorkspaceDomainDto": {
+    "type": "object",
+    "properties": {
+     "agentDomainId": {
+      "type": "string",
+      "description": "ID del dominio del acervo a conectar"
+     }
+    },
+    "required": [
+     "agentDomainId"
+    ]
+   },
+   "ConnectWorkspaceRagProjectDto": {
+    "type": "object",
+    "properties": {
+     "ragProjectId": {
+      "type": "string",
+      "description": "ID del proyecto RAG SQL a conectar"
+     }
+    },
+    "required": [
+     "ragProjectId"
+    ]
+   },
+   "CreateWorkspaceNoteDto": {
+    "type": "object",
+    "properties": {
+     "title": {
+      "type": "string",
+      "description": "Título de la nota"
+     },
+     "content": {
+      "type": "string",
+      "description": "Contenido de la nota"
+     },
+     "sourceThreadId": {
+      "type": "string",
+      "description": "Hilo de origen (opcional)"
+     },
+     "sourceMessageId": {
+      "type": "string",
+      "description": "Mensaje de origen (opcional)"
+     }
+    },
+    "required": [
+     "content"
+    ]
+   },
+   "FileUploadItemDto": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "organizationId": {
+      "type": "string"
+     },
+     "agentDomainId": {
+      "type": "object",
+      "nullable": true
+     },
+     "purpose": {
+      "type": "string",
+      "enum": [
+       "DOCUMENT",
+       "USER_AVATAR",
+       "ORGANIZATION_LOGO",
+       "ASSISTANT_LOGO"
+      ]
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "UPLOADING",
+       "UPLOADED_LOCAL",
+       "SYNCING_R2",
+       "AVAILABLE",
+       "INDEXED",
+       "ERROR",
+       "CANCELED",
+       "EXPIRED"
+      ]
+     },
+     "originalName": {
+      "type": "string"
+     },
+     "contentType": {
+      "type": "string"
+     },
+     "sizeBytes": {
+      "type": "object",
+      "nullable": true
+     },
+     "bytesWritten": {
+      "type": "number"
+     },
+     "r2Url": {
+      "type": "object",
+      "nullable": true
+     },
+     "syncError": {
+      "type": "object",
+      "nullable": true
+     },
+     "workspaceId": {
+      "type": "object",
+      "nullable": true
+     },
+     "parentFileUploadId": {
+      "type": "object",
+      "nullable": true
+     },
+     "createdAt": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "organizationId",
+     "purpose",
+     "status",
+     "originalName",
+     "contentType",
+     "bytesWritten",
+     "createdAt",
+     "updatedAt"
+    ]
+   },
+   "PaginatedFileUploadResponseDto": {
+    "type": "object",
+    "properties": {
+     "total": {
+      "type": "number"
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/FileUploadItemDto"
+      }
+     }
+    },
+    "required": [
+     "total",
+     "items"
+    ]
+   },
+   "BulkChangeDomainDto": {
+    "type": "object",
+    "properties": {
+     "fileUploadIds": {
+      "description": "IDs de los file uploads a cambiar de dominio",
+      "example": [
+       "uuid-1",
+       "uuid-2"
+      ],
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "agentDomainId": {
+      "type": "string",
+      "description": "ID del nuevo dominio destino",
+      "example": "uuid-domain"
+     }
+    },
+    "required": [
+     "fileUploadIds",
+     "agentDomainId"
+    ]
+   },
+   "BulkChangeDomainResponseDto": {
+    "type": "object",
+    "properties": {
+     "updated": {
+      "type": "number",
+      "description": "Cantidad de archivos actualizados"
+     },
+     "updatedIds": {
+      "description": "IDs de los archivos que fueron actualizados",
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "errors": {
+      "description": "Errores por archivo (si hubo)",
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "required": [
+     "updated",
+     "updatedIds"
+    ]
+   },
+   "UpdateFileUploadLinkDto": {
+    "type": "object",
+    "properties": {
+     "parentFileUploadId": {
+      "type": "string",
+      "description": "Id del documento padre (vincular) o null (desvincular). Depth-1: un documento con adjuntos no puede vincularse; un adjunto no puede recibir adjuntos (D36)",
+      "nullable": true
+     }
+    },
+    "required": [
+     "parentFileUploadId"
+    ]
+   },
+   "FileUploadLinkResponseDto": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "parentFileUploadId": {
+      "type": "object",
+      "nullable": true
+     }
+    },
+    "required": [
+     "id"
+    ]
+   },
+   "FileUploadPreviewResponseDto": {
+    "type": "object",
+    "properties": {
+     "markdown": {
+      "type": "string",
+      "description": "Markdown sanitizado del documento (D34)"
+     },
+     "markdownSize": {
+      "type": "object",
+      "nullable": true
+     },
+     "markdownTokenCount": {
+      "type": "object",
+      "nullable": true
+     }
+    },
+    "required": [
+     "markdown"
+    ]
+   },
+   "CreateFileUploadIndexingConfigDto": {
+    "type": "object",
+    "properties": {
+     "documentTypeHint": {
+      "type": "string",
+      "enum": [
+       "AUTO",
+       "STRUCTURED",
+       "UNSTRUCTURED",
+       "QNA",
+       "FORMULARIO"
+      ],
+      "default": "AUTO"
+     },
+     "documentStyle": {
+      "type": "string",
+      "enum": [
+       "GENERAL",
+       "LEGAL",
+       "ACADEMIC",
+       "MANUAL",
+       "FAQ",
+       "CONTRATO",
+       "CATALOGO",
+       "OTRO"
+      ]
+     },
+     "sourceLanguage": {
+      "type": "object"
+     },
+     "sourceInternalUrl": {
+      "type": "object"
+     },
+     "processingNotes": {
+      "type": "object"
+     },
+     "extractionStrategy": {
+      "type": "string",
+      "enum": [
+       "HI_RES",
+       "FAST",
+       "AUTO",
+       "OCR_ONLY"
+      ],
+      "default": "FAST"
+     },
+     "extractImages": {
+      "type": "boolean",
+      "default": false
+     },
+     "summarizeImages": {
+      "type": "boolean",
+      "default": false
+     },
+     "translateTarget": {
+      "type": "string",
+      "enum": [
+       "pt-BR",
+       "pt",
+       "en",
+       "es",
+       "fr",
+       "de",
+       "it",
+       "zh",
+       "ja",
+       "ko"
+      ]
+     },
+     "translateSummariesOnly": {
+      "type": "boolean",
+      "default": false
+     },
+     "llmMaxTokens": {
+      "type": "object",
+      "minimum": 1
+     },
+     "llmTemperature": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 1
+     },
+     "llmTextId": {
+      "type": "object",
+      "description": "ID del LLM para resumos de texto"
+     },
+     "llmVisionId": {
+      "type": "object",
+      "description": "ID del LLM/VLM para descripción de imágenes"
+     },
+     "generateEmbeddings": {
+      "type": "boolean",
+      "default": false
+     },
+     "embeddingsOnly": {
+      "type": "boolean",
+      "default": false
+     },
+     "embeddingLanguage": {
+      "type": "object",
+      "example": "es"
+     },
+     "embeddingStrategy": {
+      "type": "string",
+      "enum": [
+       "SUMMARY_AND_CHAPTERS",
+       "SUMMARY_ONLY",
+       "HYBRID_SUMMARY_CONTENT",
+       "CHUNK_ONLY"
+      ]
+     },
+     "chunkingStrategy": {
+      "type": "string",
+      "enum": [
+       "BY_TITLE",
+       "BY_TOKENS"
+      ]
+     },
+     "chunkMaxCharacters": {
+      "type": "object",
+      "minimum": 200,
+      "maximum": 10000
+     },
+     "chunkNewAfterNChars": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 10000
+     },
+     "chunkCombineUnderNChars": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 5000
+     },
+     "chunkOverlap": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 2000
+     },
+     "chunkOverlapAll": {
+      "type": "object"
+     }
+    }
+   },
+   "FileUploadIndexingConfigResponseDto": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "fileUploadId": {
+      "type": "string"
+     },
+     "requestedByUserId": {
+      "type": "string",
+      "nullable": true
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "PENDING",
+       "PROCESSING",
+       "COMPLETED",
+       "FAILED",
+       "CANCELED"
+      ]
+     },
+     "kipJobId": {
+      "type": "object",
+      "nullable": true
+     },
+     "documentTypeHint": {
+      "type": "string",
+      "enum": [
+       "AUTO",
+       "STRUCTURED",
+       "UNSTRUCTURED",
+       "QNA",
+       "FORMULARIO"
+      ]
+     },
+     "documentStyle": {
+      "type": "string",
+      "enum": [
+       "GENERAL",
+       "LEGAL",
+       "ACADEMIC",
+       "MANUAL",
+       "FAQ",
+       "CONTRATO",
+       "CATALOGO",
+       "OTRO"
+      ],
+      "nullable": true
+     },
+     "sourceLanguage": {
+      "type": "object",
+      "nullable": true
+     },
+     "sourceInternalUrl": {
+      "type": "object",
+      "nullable": true
+     },
+     "processingNotes": {
+      "type": "object",
+      "nullable": true
+     },
+     "extractionStrategy": {
+      "type": "string",
+      "enum": [
+       "HI_RES",
+       "FAST",
+       "AUTO",
+       "OCR_ONLY"
+      ]
+     },
+     "extractImages": {
+      "type": "boolean"
+     },
+     "summarizeImages": {
+      "type": "boolean"
+     },
+     "translateTarget": {
+      "type": "object",
+      "nullable": true
+     },
+     "translateSummariesOnly": {
+      "type": "boolean"
+     },
+     "llmMaxTokens": {
+      "type": "object",
+      "nullable": true
+     },
+     "llmTemperature": {
+      "type": "object",
+      "nullable": true
+     },
+     "llmTextId": {
+      "type": "object",
+      "nullable": true
+     },
+     "llmVisionId": {
+      "type": "object",
+      "nullable": true
+     },
+     "llmEmbeddingId": {
+      "type": "object",
+      "nullable": true
+     },
+     "generateEmbeddings": {
+      "type": "boolean"
+     },
+     "embeddingsOnly": {
+      "type": "boolean"
+     },
+     "embeddingProvider": {
+      "type": "object",
+      "nullable": true,
+      "deprecated": true
+     },
+     "embeddingModel": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingInputType": {
+      "type": "object",
+      "nullable": true,
+      "deprecated": true
+     },
+     "embeddingLanguage": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingStrategy": {
+      "type": "string",
+      "enum": [
+       "SUMMARY_AND_CHAPTERS",
+       "SUMMARY_ONLY",
+       "HYBRID_SUMMARY_CONTENT",
+       "CHUNK_ONLY"
+      ],
+      "nullable": true
+     },
+     "embeddingRuntime": {
+      "type": "object",
+      "nullable": true
+     },
+     "requestSparse": {
+      "type": "object",
+      "nullable": true
+     },
+     "expectedEmbeddingDim": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingProfileId": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingFailureCategory": {
+      "type": "object",
+      "nullable": true
+     },
+     "chunkingStrategy": {
+      "type": "string",
+      "enum": [
+       "BY_TITLE",
+       "BY_TOKENS"
+      ],
+      "nullable": true
+     },
+     "chunkMaxCharacters": {
+      "type": "object",
+      "nullable": true
+     },
+     "chunkNewAfterNChars": {
+      "type": "object",
+      "nullable": true
+     },
+     "chunkCombineUnderNChars": {
+      "type": "object",
+      "nullable": true
+     },
+     "chunkOverlap": {
+      "type": "object",
+      "nullable": true
+     },
+     "chunkOverlapAll": {
+      "type": "object",
+      "nullable": true
+     },
+     "documentTypeDetected": {
+      "type": "object",
+      "nullable": true
+     },
+     "chaptersCount": {
+      "type": "object",
+      "nullable": true
+     },
+     "pagesTotal": {
+      "type": "object",
+      "nullable": true
+     },
+     "elementsCount": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingModelUsed": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingDimensions": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingLanguageUsed": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingInputTypeUsed": {
+      "type": "object",
+      "nullable": true
+     },
+     "embeddingsCount": {
+      "type": "object",
+      "nullable": true
+     },
+     "sparseRequested": {
+      "type": "object",
+      "nullable": true
+     },
+     "sparseReceived": {
+      "type": "object",
+      "nullable": true
+     },
+     "sparseEmbeddingsCount": {
+      "type": "object",
+      "nullable": true
+     },
+     "sparsePersistedChunks": {
+      "type": "object",
+      "nullable": true
+     },
+     "retrievalMode": {
+      "type": "object",
+      "nullable": true
+     },
+     "outputMarkdownUrl": {
+      "type": "object",
+      "nullable": true
+     },
+     "outputEmbeddingsUrl": {
+      "type": "object",
+      "nullable": true
+     },
+     "errorMessage": {
+      "type": "object",
+      "nullable": true
+     },
+     "startedAt": {
+      "type": "object",
+      "nullable": true
+     },
+     "completedAt": {
+      "type": "object",
+      "nullable": true
+     },
+     "createdAt": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "fileUploadId",
+     "requestedByUserId",
+     "status",
+     "documentTypeHint",
+     "extractionStrategy",
+     "extractImages",
+     "summarizeImages",
+     "translateSummariesOnly",
+     "generateEmbeddings",
+     "embeddingsOnly",
+     "createdAt",
+     "updatedAt"
+    ]
+   },
+   "UpdateFileUploadIndexingConfigDto": {
+    "type": "object",
+    "properties": {
+     "documentTypeHint": {
+      "type": "string",
+      "enum": [
+       "AUTO",
+       "STRUCTURED",
+       "UNSTRUCTURED",
+       "QNA",
+       "FORMULARIO"
+      ],
+      "default": "AUTO"
+     },
+     "documentStyle": {
+      "type": "string",
+      "enum": [
+       "GENERAL",
+       "LEGAL",
+       "ACADEMIC",
+       "MANUAL",
+       "FAQ",
+       "CONTRATO",
+       "CATALOGO",
+       "OTRO"
+      ]
+     },
+     "sourceLanguage": {
+      "type": "object"
+     },
+     "sourceInternalUrl": {
+      "type": "object"
+     },
+     "processingNotes": {
+      "type": "object"
+     },
+     "extractionStrategy": {
+      "type": "string",
+      "enum": [
+       "HI_RES",
+       "FAST",
+       "AUTO",
+       "OCR_ONLY"
+      ],
+      "default": "FAST"
+     },
+     "extractImages": {
+      "type": "boolean",
+      "default": false
+     },
+     "summarizeImages": {
+      "type": "boolean",
+      "default": false
+     },
+     "translateTarget": {
+      "type": "string",
+      "enum": [
+       "pt-BR",
+       "pt",
+       "en",
+       "es",
+       "fr",
+       "de",
+       "it",
+       "zh",
+       "ja",
+       "ko"
+      ]
+     },
+     "translateSummariesOnly": {
+      "type": "boolean",
+      "default": false
+     },
+     "llmMaxTokens": {
+      "type": "object",
+      "minimum": 1
+     },
+     "llmTemperature": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 1
+     },
+     "llmTextId": {
+      "type": "object",
+      "description": "ID del LLM para resumos de texto"
+     },
+     "llmVisionId": {
+      "type": "object",
+      "description": "ID del LLM/VLM para descripción de imágenes"
+     },
+     "generateEmbeddings": {
+      "type": "boolean",
+      "default": false
+     },
+     "embeddingsOnly": {
+      "type": "boolean",
+      "default": false
+     },
+     "embeddingLanguage": {
+      "type": "object",
+      "example": "es"
+     },
+     "embeddingStrategy": {
+      "type": "string",
+      "enum": [
+       "SUMMARY_AND_CHAPTERS",
+       "SUMMARY_ONLY",
+       "HYBRID_SUMMARY_CONTENT",
+       "CHUNK_ONLY"
+      ]
+     },
+     "chunkingStrategy": {
+      "type": "string",
+      "enum": [
+       "BY_TITLE",
+       "BY_TOKENS"
+      ]
+     },
+     "chunkMaxCharacters": {
+      "type": "object",
+      "minimum": 200,
+      "maximum": 10000
+     },
+     "chunkNewAfterNChars": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 10000
+     },
+     "chunkCombineUnderNChars": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 5000
+     },
+     "chunkOverlap": {
+      "type": "object",
+      "minimum": 0,
+      "maximum": 2000
+     },
+     "chunkOverlapAll": {
+      "type": "object"
+     }
+    }
+   }
+  }
+ }
+}

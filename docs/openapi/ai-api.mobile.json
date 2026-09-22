@@ -1,0 +1,2801 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "aiKuaa Chat API (ai-api) — subconjunto mobile",
+  "version": "dev",
+  "description": "Subconjunto das rotas que o app movel consome. Gerado do codigo em 2026-09-20. Os caminhos aqui comecam em /api/... — em producao o app chama /py/api/..., porque o edge-proxy remove o prefixo /py. Respostas 2xx tipadas em 100% das rotas."
+ },
+ "paths": {
+  "/api/chat": {
+   "post": {
+    "tags": [
+     "Chat"
+    ],
+    "summary": "Chat Endpoint",
+    "description": "Endpoint principal de chat.\n\nRecebe uma mensagem do usuário e:\n- Cria ou recupera thread\n- Gera título automaticamente via nó LangGraph\n- Detecta mudança de contexto via denes-embedder\n- Roteia para domínio apropriado (GENERIC ou WEB_SEARCH)\n- Persiste em Redis\n- Retorna resposta gerada\n\nArgs:\n    request: ChatRequest com thread_id, model_name, message, metadata\n\nReturns:\n    ChatResponse com resposta e metadados completos",
+    "operationId": "chat_api_chat_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ChatRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChatResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "List User Threads",
+    "description": "Lista todas as threads de um usuário (ordenadas por mais recentes).\n\nCom ``workspace_id``, lista as threads do projeto (índice secundário\n``workspace:{id}:threads``) pertencentes ao usuário (D29 — conteúdo do\ndono). Sem o parâmetro, comportamento legado inalterado.\n\nO ``user_id`` da query segue aceito por compatibilidade, mas não autoriza\nnada: com token válido, quem manda é o principal.",
+    "operationId": "list_user_threads_api_threads__get",
+    "parameters": [
+     {
+      "name": "user_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "description": "ID do usuário",
+       "title": "User Id"
+      },
+      "description": "ID do usuário"
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 500,
+       "minimum": 1,
+       "description": "Limite de threads a retornar",
+       "default": 200,
+       "title": "Limit"
+      },
+      "description": "Limite de threads a retornar"
+     },
+     {
+      "name": "workspace_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Proyectos PR-07 (D31): filtrar threads de um workspace",
+       "title": "Workspace Id"
+      },
+      "description": "Proyectos PR-07 (D31): filtrar threads de um workspace"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ThreadListResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/{thread_id}": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Get Thread",
+    "description": "Retorna metadados de uma thread específica",
+    "operationId": "get_thread_api_threads__thread_id__get",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ThreadMetadataResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Update Thread",
+    "description": "Atualiza metadados de una thread (título, dominio, favorito, proyecto)",
+    "operationId": "update_thread_api_threads__thread_id__patch",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateThreadRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ThreadMetadataResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Delete Thread",
+    "description": "Deleta uma thread e todas suas mensagens.\n\nApós limpar o Redis, dispara notificação best-effort para o\ndenes-backend-admin purgar o backup em Postgres imediatamente. Se a\nnotificação falhar, o reconciliador horário do admin compensa.",
+    "operationId": "delete_thread_api_threads__thread_id__delete",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/{thread_id}/messages": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Get Thread Messages",
+    "description": "Retorna mensagens de uma thread",
+    "operationId": "get_thread_messages_api_threads__thread_id__messages_get",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     },
+     {
+      "name": "count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "description": "Número de mensagens a retornar",
+       "default": 50,
+       "title": "Count"
+      },
+      "description": "Número de mensagens a retornar"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ThreadMessagesResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/{thread_id}/title-status": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Get Title Status",
+    "description": "Retorna status da classificação de título de uma thread.\nFrontend pode fazer polling neste endpoint para verificar quando o título está pronto.\n\nStatus possíveis:\n- pending: Aguardando classificação\n- processing: Classificação em andamento\n- completed: Título gerado com sucesso\n- failed: Falha na geração de título\n- indeterminate: Conteúdo não substancial para gerar título\n- exhausted: Excedeu o limite de tentativas e não tentará novamente",
+    "operationId": "get_title_status_api_threads__thread_id__title_status_get",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TitleStatusResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/{thread_id}/events": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Stream Thread Events",
+    "description": "SSE para eventos da thread.\nAtualmente emite atualização de título/status via event type `thread.title.updated`.",
+    "operationId": "stream_thread_events_api_threads__thread_id__events_get",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/classify-batch": {
+   "post": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Classify Threads Batch",
+    "description": "Enfileira todas as threads não classificadas do usuário para geração de título em background.\nÚtil para chamar no login do usuário para atualizar títulos pendentes.\n\nThreads elegíveis:\n- classification_status: pending ou failed\n- Threads sem título definido\n\nO ``user_id`` da query segue aceito por compatibilidade, mas não autoriza\nnada: com token válido, quem manda é o principal.",
+    "operationId": "classify_threads_batch_api_threads_classify_batch_post",
+    "parameters": [
+     {
+      "name": "user_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "description": "ID do usuário",
+       "title": "User Id"
+      },
+      "description": "ID do usuário"
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 500,
+       "minimum": 1,
+       "description": "Limite de threads a classificar",
+       "default": 200,
+       "title": "Limit"
+      },
+      "description": "Limite de threads a classificar"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ClassifyBatchResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/threads/queue-status": {
+   "get": {
+    "tags": [
+     "Threads",
+     "threads"
+    ],
+    "summary": "Get Title Queue Status",
+    "description": "Retorna o status atual da fila de geração de títulos.\nÚtil para debugging e monitoramento.",
+    "operationId": "get_title_queue_status_api_threads_queue_status_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files": {
+   "post": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Upload File",
+    "description": "Upload de arquivo com processamento assíncrono.\n\nPipeline:\n1. Validações (tamanho, MIME, thread)\n2. Calcular SHA256 hash (deduplicação)\n3. Salvar arquivo físico\n4. Registrar em PostgreSQL e Redis\n5. Disparar background task (FASE 2)\n\nO ``user_id`` do formulário segue aceito por compatibilidade, mas não\nautoriza nada: com token válido, quem manda é o principal.",
+    "operationId": "upload_file_api_files_post",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_upload_file_api_files_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UploadResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/content": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Get Upload Content",
+    "description": "Serve conteúdo original do upload por upload_id (inline por padrão).",
+    "operationId": "get_upload_content_api_files__upload_id__content_get",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     },
+     {
+      "name": "download",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Download"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/thread/{thread_id}/tabular": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "List Thread Tabular Uploads",
+    "description": "Uploads tabulares vivos de uma thread, para reidratar os cards no chat.",
+    "operationId": "list_thread_tabular_uploads_api_files_thread__thread_id__tabular_get",
+    "parameters": [
+     {
+      "name": "thread_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Thread Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/artifacts": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "List Upload Artifacts",
+    "description": "Lista os artifacts do CSV Analytics de um upload (SDD §11.3).",
+    "operationId": "list_upload_artifacts_api_files__upload_id__artifacts_get",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/artifacts/{artifact_id}": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Get Upload Artifact",
+    "description": "Detalhe/conteúdo de um artifact, escopado por upload_id (SDD §11.3).",
+    "operationId": "get_upload_artifact_api_files__upload_id__artifacts__artifact_id__get",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     },
+     {
+      "name": "artifact_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Artifact Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/status": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Get Upload Status Sse",
+    "description": "SSE streaming endpoint for upload status.\nSends real-time progress updates until upload completes or fails.",
+    "operationId": "get_upload_status_sse_api_files__upload_id__status_get",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/cancel": {
+   "post": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Cancel Upload",
+    "description": "Cancelar processamento de upload (FASE 3)",
+    "operationId": "cancel_upload_api_files__upload_id__cancel_post",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{upload_id}/detach": {
+   "post": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Detach Upload",
+    "operationId": "detach_upload_api_files__upload_id__detach_post",
+    "parameters": [
+     {
+      "name": "upload_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Upload Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DetachUploadRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/process-batch": {
+   "post": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Create Visual Analysis",
+    "operationId": "create_visual_analysis_api_files_process_batch_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VisualAnalysisRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/VisualAnalysisResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/visual-analyses": {
+   "post": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Create Visual Analysis",
+    "operationId": "create_visual_analysis_api_files_visual_analyses_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VisualAnalysisRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/VisualAnalysisResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/visual-analyses/{visual_analysis_id}/events": {
+   "get": {
+    "tags": [
+     "File Upload"
+    ],
+    "summary": "Stream Visual Analysis Events",
+    "operationId": "stream_visual_analysis_events_api_files_visual_analyses__visual_analysis_id__events_get",
+    "parameters": [
+     {
+      "name": "visual_analysis_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Visual Analysis Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/feedback/submit": {
+   "post": {
+    "tags": [
+     "Feedback",
+     "feedback"
+    ],
+    "summary": "Submit Feedback",
+    "description": "Submit like/dislike feedback for a chat message.\nStores feedback in Redis Stream for later sync to PostgreSQL.\n\n- **thread_id**: UUID of the conversation thread\n- **message_id**: ULID of the assistant message\n- **liked**: True if user clicked thumbs up\n- **disliked**: True if user clicked thumbs down\n- **feedback_reason**: Required if disliked (incorrecta, inapropiada, desactualizada, otro)\n- **feedback_comment**: Optional detailed feedback text",
+    "operationId": "submit_feedback_api_feedback_submit_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SubmitFeedbackRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeedbackResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/agent/run": {
+   "post": {
+    "tags": [
+     "AG-UI Agent",
+     "AG-UI Agent"
+    ],
+    "summary": "Run Agent Sse",
+    "description": "AG-UI compatible SSE streaming endpoint\n\nFeatures:\n- Production SSE headers (Cloudflare/Nginx compatible)\n- Automatic timeout + cleanup\n- Keepalive pings\n- Client disconnect detection",
+    "operationId": "run_agent_sse_api_agent_run_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RunAgentRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/agent/cancel": {
+   "post": {
+    "tags": [
+     "AG-UI Agent",
+     "AG-UI Agent"
+    ],
+    "summary": "Cancel Run",
+    "description": "Cancela run de forma idempotente e distribuída.",
+    "operationId": "cancel_run_api_agent_cancel_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CancelRunRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/agent/health": {
+   "get": {
+    "tags": [
+     "AG-UI Agent",
+     "AG-UI Agent"
+    ],
+    "summary": "Health Check",
+    "description": "Health check",
+    "operationId": "health_check_api_agent_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/from-attachment": {
+   "post": {
+    "tags": [
+     "File Serve",
+     "File Serve"
+    ],
+    "summary": "Save Attachment",
+    "description": "Save a base64-encoded file attachment and return a download URL.",
+    "operationId": "save_attachment_api_files_from_attachment_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AttachmentUpload"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileUploadResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/files/{file_id}": {
+   "get": {
+    "tags": [
+     "File Serve",
+     "File Serve"
+    ],
+    "summary": "Serve File",
+    "description": "Serve a temporary file by its ID.",
+    "operationId": "serve_file_api_files__file_id__get",
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "File Id"
+      }
+     },
+     {
+      "name": "download",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Download"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/chat/audio/transcribe": {
+   "post": {
+    "tags": [
+     "Chat Audio",
+     "Chat Audio"
+    ],
+    "summary": "Transcribe Audio",
+    "description": "POST /chat/audio/transcribe — transcreve audio via Celery task.\n\nFluxo: auth guard -> content-length cap -> read bytes -> dispatch Celery\n       -> .get(timeout=90) -> map result/exception -> AudioTranscribeResponse.\n\nD-09: payload chat NAO inclui \"callback\" (MVP sync, sem Stage B).\nD-10: idempotencia via Redis key audio:task:{sha256}:{org_id} (Phase 3, zero mudanca).\nADR-AUDIO-005: .get(timeout=90) bloqueia worker — aceitavel MVP.\n\nO ``user_id`` e o ``organization_id`` do formulario seguem aceitos por\ncompatibilidade, mas nao autorizam nada: com token valido, quem manda e o\nprincipal.",
+    "operationId": "transcribe_audio_api_chat_audio_transcribe_post",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_transcribe_audio_api_chat_audio_transcribe_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AudioTranscribeResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AttachmentUpload": {
+    "properties": {
+     "filename": {
+      "type": "string",
+      "title": "Filename",
+      "description": "Nombre del archivo"
+     },
+     "content_type": {
+      "type": "string",
+      "title": "Content Type",
+      "description": "MIME type",
+      "default": "application/octet-stream"
+     },
+     "base64_content": {
+      "type": "string",
+      "title": "Base64 Content",
+      "description": "Contenido del archivo en base64"
+     }
+    },
+    "type": "object",
+    "required": [
+     "filename",
+     "base64_content"
+    ],
+    "title": "AttachmentUpload"
+   },
+   "AudioTranscribeResponse": {
+    "properties": {
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "language": {
+      "type": "string",
+      "title": "Language"
+     },
+     "duration_seconds": {
+      "type": "number",
+      "title": "Duration Seconds"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     }
+    },
+    "type": "object",
+    "required": [
+     "text",
+     "language",
+     "duration_seconds",
+     "provider"
+    ],
+    "title": "AudioTranscribeResponse",
+    "description": "Resposta de sucesso do endpoint POST /chat/audio/transcribe (D-12).\n\nCampos espelho de TranscriptionResult (src/services/audio/models.py)\nexpostos ao frontend — sem campos internos (language_probability, model_id,\nwords, raw)."
+   },
+   "Body_transcribe_audio_api_chat_audio_transcribe_post": {
+    "properties": {
+     "file": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "title": "File"
+     },
+     "user_id": {
+      "type": "string",
+      "title": "User Id"
+     },
+     "organization_id": {
+      "type": "string",
+      "title": "Organization Id"
+     },
+     "language_hint": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Language Hint"
+     }
+    },
+    "type": "object",
+    "required": [
+     "file",
+     "user_id",
+     "organization_id"
+    ],
+    "title": "Body_transcribe_audio_api_chat_audio_transcribe_post"
+   },
+   "Body_upload_file_api_files_post": {
+    "properties": {
+     "file": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "title": "File"
+     },
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "composer_batch_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Composer Batch Id"
+     },
+     "message_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message Id"
+     },
+     "user_id": {
+      "type": "string",
+      "title": "User Id"
+     },
+     "domain": {
+      "type": "string",
+      "title": "Domain",
+      "default": "GENERIC"
+     },
+     "language": {
+      "type": "string",
+      "title": "Language",
+      "default": "auto"
+     },
+     "api_key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Api Key"
+     },
+     "org_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Org Id"
+     },
+     "llm_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Llm Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "file",
+     "thread_id",
+     "user_id"
+    ],
+    "title": "Body_upload_file_api_files_post"
+   },
+   "CancelRunRequest": {
+    "properties": {
+     "threadId": {
+      "type": "string",
+      "title": "Threadid"
+     },
+     "runId": {
+      "type": "string",
+      "title": "Runid"
+     }
+    },
+    "type": "object",
+    "required": [
+     "threadId",
+     "runId"
+    ],
+    "title": "CancelRunRequest"
+   },
+   "ChatRequest": {
+    "properties": {
+     "thread_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Thread Id",
+      "description": "ID da thread existente ou null para criar nova"
+     },
+     "selected_model": {
+      "$ref": "#/components/schemas/SelectedModel",
+      "description": "Modelo selecionado com URL e versão"
+     },
+     "domain": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Domain",
+      "description": "Domínio específico ou null para usar domínio atual (dinâmico)"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message",
+      "description": "Mensagem do usuário"
+     },
+     "metadata": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Metadata",
+      "description": "Metadados obrigatórios, deve conter user_id e allowed_domains"
+     }
+    },
+    "type": "object",
+    "required": [
+     "selected_model",
+     "message",
+     "metadata"
+    ],
+    "title": "ChatRequest",
+    "description": "Request payload para o endpoint /chat",
+    "example": {
+     "message": "Olá, como você está?",
+     "metadata": {
+      "user_id": "user_pub_123"
+     },
+     "selected_model": {
+      "name": "gpt-4o-mini",
+      "url": "https://api.openai.com/v1",
+      "version": "4o-mini"
+     }
+    }
+   },
+   "ChatResponse": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id",
+      "description": "ID da thread"
+     },
+     "user_id": {
+      "type": "string",
+      "title": "User Id",
+      "description": "ID do usuário"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title",
+      "description": "Título da conversa ou null se ainda não definido"
+     },
+     "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Domínio usado (dinâmico)"
+     },
+     "response": {
+      "type": "string",
+      "title": "Response",
+      "description": "Resposta gerada pela LLM"
+     },
+     "assistant_message_id": {
+      "type": "string",
+      "title": "Assistant Message Id",
+      "description": "ULID da mensagem do assistente salva no Redis"
+     },
+     "routing": {
+      "$ref": "#/components/schemas/Routing",
+      "description": "Informações de roteamento"
+     },
+     "persisted": {
+      "$ref": "#/components/schemas/Persisted"
+     },
+     "token_usage": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TokenUsage"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Consumo de tokens da resposta"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "user_id",
+     "domain",
+     "response",
+     "assistant_message_id",
+     "routing",
+     "persisted"
+    ],
+    "title": "ChatResponse",
+    "description": "Response do endpoint /chat",
+    "example": {
+     "assistant_message_id": "01JAFBQXYZ9876543210FEDCBA",
+     "domain": "GENERIC",
+     "persisted": {
+      "message_count": 2,
+      "updated_at": 1729515234567
+     },
+     "response": "Olá! Estou bem, obrigado por perguntar. Como posso ajudá-lo hoje?",
+     "routing": {
+      "context_shift": {
+       "shifted": false,
+       "similarity": 0.85,
+       "threshold": 0.5
+      },
+      "model_name": "gpt-4o-mini"
+     },
+     "thread_id": "01JAFBQXYZ1234567890ABCDEF",
+     "title": "Consulta Sobre Frameworks Python",
+     "token_usage": {
+      "completion_tokens": 45,
+      "prompt_tokens": 125,
+      "total_tokens": 170
+     },
+     "user_id": "user_pub_123"
+    }
+   },
+   "ClassifyBatchResponse": {
+    "properties": {
+     "queued": {
+      "type": "integer",
+      "title": "Queued"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     }
+    },
+    "type": "object",
+    "required": [
+     "queued",
+     "message"
+    ],
+    "title": "ClassifyBatchResponse"
+   },
+   "ContextShift": {
+    "properties": {
+     "similarity": {
+      "type": "number",
+      "title": "Similarity",
+      "description": "Score de similaridade do cosseno (0.0 a 1.0)"
+     },
+     "threshold": {
+      "type": "number",
+      "title": "Threshold",
+      "description": "Threshold configurado para detecção"
+     },
+     "shifted": {
+      "type": "boolean",
+      "title": "Shifted",
+      "description": "Se houve mudança de contexto"
+     }
+    },
+    "type": "object",
+    "required": [
+     "similarity",
+     "threshold",
+     "shifted"
+    ],
+    "title": "ContextShift",
+    "description": "Informações sobre mudança de contexto"
+   },
+   "DetachUploadRequest": {
+    "properties": {
+     "thread_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Thread Id"
+     }
+    },
+    "type": "object",
+    "title": "DetachUploadRequest"
+   },
+   "FeedbackReason": {
+    "type": "string",
+    "enum": [
+     "incorrecta",
+     "inapropiada",
+     "desactualizada",
+     "otro"
+    ],
+    "title": "FeedbackReason",
+    "description": "Enum matching Prisma Motivo enum"
+   },
+   "FeedbackResponse": {
+    "properties": {
+     "success": {
+      "type": "boolean",
+      "title": "Success"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "message_id": {
+      "type": "string",
+      "title": "Message Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "success",
+     "message",
+     "thread_id",
+     "message_id"
+    ],
+    "title": "FeedbackResponse",
+    "description": "Response after submitting feedback"
+   },
+   "FileUploadResponse": {
+    "properties": {
+     "file_id": {
+      "type": "string",
+      "title": "File Id"
+     },
+     "filename": {
+      "type": "string",
+      "title": "Filename"
+     },
+     "content_type": {
+      "type": "string",
+      "title": "Content Type"
+     },
+     "size": {
+      "type": "integer",
+      "title": "Size"
+     },
+     "download_url": {
+      "type": "string",
+      "title": "Download Url"
+     }
+    },
+    "type": "object",
+    "required": [
+     "file_id",
+     "filename",
+     "content_type",
+     "size",
+     "download_url"
+    ],
+    "title": "FileUploadResponse"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "MessageResponse": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "role": {
+      "type": "string",
+      "title": "Role"
+     },
+     "content": {
+      "type": "string",
+      "title": "Content"
+     },
+     "ts": {
+      "type": "integer",
+      "title": "Ts"
+     },
+     "metadata": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Metadata"
+     },
+     "liked": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Liked"
+     },
+     "disliked": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Disliked"
+     },
+     "feedback_reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feedback Reason"
+     },
+     "feedback_comment": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feedback Comment"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "role",
+     "content",
+     "ts"
+    ],
+    "title": "MessageResponse"
+   },
+   "Persisted": {
+    "properties": {
+     "message_count": {
+      "type": "integer",
+      "title": "Message Count",
+      "description": "Quantidade de mensagens na thread"
+     },
+     "updated_at": {
+      "type": "integer",
+      "title": "Updated At",
+      "description": "Timestamp da última atualização (epoch ms)"
+     }
+    },
+    "type": "object",
+    "required": [
+     "message_count",
+     "updated_at"
+    ],
+    "title": "Persisted",
+    "description": "Informações de persistência"
+   },
+   "Routing": {
+    "properties": {
+     "model_name": {
+      "type": "string",
+      "title": "Model Name",
+      "description": "Nome do modelo usado"
+     },
+     "context_shift": {
+      "$ref": "#/components/schemas/ContextShift",
+      "description": "Informações de mudança de contexto"
+     },
+     "domain_changed_from": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Domain Changed From",
+      "description": "Domínio anterior se houve mudança (dinâmico)"
+     }
+    },
+    "type": "object",
+    "required": [
+     "model_name",
+     "context_shift"
+    ],
+    "title": "Routing",
+    "description": "Informações de roteamento da requisição"
+   },
+   "RunAgentRequest": {
+    "properties": {
+     "threadId": {
+      "type": "string",
+      "title": "Threadid",
+      "description": "Conversation thread ID"
+     },
+     "userMessageId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Usermessageid",
+      "description": "Canonical user message ID generated by the client"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message",
+      "description": "User message"
+     },
+     "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Agent domain",
+      "default": "GENERIC"
+     },
+     "model_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Name",
+      "description": "LLM model name"
+     },
+     "model_version": {
+      "type": "string",
+      "title": "Model Version",
+      "description": "LLM model version",
+      "default": "latest"
+     },
+     "model_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Url",
+      "description": "Custom model URL"
+     },
+     "model_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Id",
+      "description": "Custom model ID"
+     },
+     "model_api_key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Api Key",
+      "description": "Organization API key for this model"
+     },
+     "model_provider": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Provider",
+      "description": "Known provider from DB (openai, anthropic, google, etc.)"
+     },
+     "tool_calling_strategy": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tool Calling Strategy",
+      "description": "Tool calling strategy: auto, native, harmony, prompt_based, none",
+      "default": "auto"
+     },
+     "supports_native_tools": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Supports Native Tools",
+      "description": "Override for auto tool detection"
+     },
+     "harmony_format": {
+      "type": "boolean",
+      "title": "Harmony Format",
+      "description": "Uses Harmony format (gpt-oss models)",
+      "default": false
+     },
+     "mcp_function_tools_enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mcp Function Tools Enabled",
+      "description": "Override para MCP function tools (true/false). None usa rollout padrão."
+     },
+     "mcp_function_tools_rollout": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mcp Function Tools Rollout",
+      "description": "Override de rollout MCP: all, none, allowlist, denylist"
+     },
+     "timeout_seconds": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 600.0,
+        "minimum": 10.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Timeout Seconds",
+      "description": "Custom timeout (10-600s)"
+     },
+     "metadata": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Metadata",
+      "description": "Additional metadata (user_id, etc.)"
+     },
+     "reasoning_enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reasoning Enabled",
+      "description": "User toggle: enable reasoning for this request. None = fall back to model capabilities."
+     },
+     "reasoning_effort": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "low",
+         "medium",
+         "high"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reasoning Effort",
+      "description": "Reasoning effort level. Wire value (Spanish labels live in chat UI)."
+     },
+     "reasoning_max_tokens": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 65536.0,
+        "minimum": 1.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reasoning Max Tokens",
+      "description": "Max tokens for reasoning (admin-capped by model capability)."
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "threadId",
+     "message"
+    ],
+    "title": "RunAgentRequest",
+    "description": "AG-UI RunAgentInput"
+   },
+   "SelectedModel": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name",
+      "description": "Nome do modelo (ex: gpt-4o-mini, denes-0.1(beta))"
+     },
+     "version": {
+      "type": "string",
+      "title": "Version",
+      "description": "Versão do modelo"
+     },
+     "url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Url",
+      "description": "URL base da API (ex: http://62.169.159.136:8000/v1, https://api.openai.com/v1)"
+     },
+     "model_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Id",
+      "description": "ID do modelo para APIs customizadas (ex: /mnt/data/openai/gpt-oss-120b)"
+     },
+     "apiKey": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Apikey",
+      "description": "API key da organização para este modelo"
+     },
+     "provider": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Provider",
+      "description": "Provider do modelo (openai, anthropic, google, etc.)"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "version"
+    ],
+    "title": "SelectedModel",
+    "description": "Modelo selecionado com suas configurações"
+   },
+   "SubmitFeedbackRequest": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id",
+      "description": "Thread UUID"
+     },
+     "message_id": {
+      "type": "string",
+      "title": "Message Id",
+      "description": "Message ULID"
+     },
+     "liked": {
+      "type": "boolean",
+      "title": "Liked",
+      "description": "True if user liked the message",
+      "default": false
+     },
+     "disliked": {
+      "type": "boolean",
+      "title": "Disliked",
+      "description": "True if user disliked the message",
+      "default": false
+     },
+     "feedback_reason": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/FeedbackReason"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Reason for dislike"
+     },
+     "feedback_comment": {
+      "type": "string",
+      "maxLength": 1000,
+      "title": "Feedback Comment",
+      "description": "Optional comment",
+      "default": ""
+     },
+     "org_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Org Id",
+      "description": "Organization UUID"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "message_id"
+    ],
+    "title": "SubmitFeedbackRequest",
+    "description": "Request body for submitting feedback",
+    "example": {
+     "disliked": true,
+     "feedback_comment": "La respuesta contiene información incorrecta",
+     "feedback_reason": "incorrecta",
+     "liked": false,
+     "message_id": "01JFYYY...",
+     "org_id": "550e8400-e29b-41d4-a716-446655440000",
+     "thread_id": "01JFXXX..."
+    }
+   },
+   "ThreadListResponse": {
+    "properties": {
+     "threads": {
+      "items": {
+       "$ref": "#/components/schemas/ThreadMetadataResponse"
+      },
+      "type": "array",
+      "title": "Threads"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     }
+    },
+    "type": "object",
+    "required": [
+     "threads",
+     "total"
+    ],
+    "title": "ThreadListResponse"
+   },
+   "ThreadMessagesResponse": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "messages": {
+      "items": {
+       "$ref": "#/components/schemas/MessageResponse"
+      },
+      "type": "array",
+      "title": "Messages"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "messages"
+    ],
+    "title": "ThreadMessagesResponse"
+   },
+   "ThreadMetadataResponse": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "user_id": {
+      "type": "string",
+      "title": "User Id"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "title_status": {
+      "type": "string",
+      "title": "Title Status"
+     },
+     "classification_status": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "pending",
+         "processing",
+         "completed",
+         "failed",
+         "indeterminate",
+         "exhausted"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Classification Status"
+     },
+     "domain": {
+      "type": "string",
+      "title": "Domain"
+     },
+     "created_at": {
+      "type": "integer",
+      "title": "Created At"
+     },
+     "updated_at": {
+      "type": "integer",
+      "title": "Updated At"
+     },
+     "message_count": {
+      "type": "integer",
+      "title": "Message Count"
+     },
+     "last_message_preview": {
+      "type": "string",
+      "title": "Last Message Preview"
+     },
+     "is_favorite": {
+      "type": "boolean",
+      "title": "Is Favorite",
+      "default": false
+     },
+     "workspace_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workspace Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "user_id",
+     "title",
+     "title_status",
+     "domain",
+     "created_at",
+     "updated_at",
+     "message_count",
+     "last_message_preview"
+    ],
+    "title": "ThreadMetadataResponse"
+   },
+   "TitleStatusResponse": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "title_status": {
+      "type": "string",
+      "title": "Title Status"
+     },
+     "classification_status": {
+      "type": "string",
+      "enum": [
+       "pending",
+       "processing",
+       "completed",
+       "failed",
+       "indeterminate",
+       "exhausted"
+      ],
+      "title": "Classification Status"
+     },
+     "updated_at": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updated At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "title",
+     "title_status",
+     "classification_status"
+    ],
+    "title": "TitleStatusResponse"
+   },
+   "TokenUsage": {
+    "properties": {
+     "prompt_tokens": {
+      "type": "integer",
+      "title": "Prompt Tokens",
+      "description": "Número de tokens no prompt"
+     },
+     "completion_tokens": {
+      "type": "integer",
+      "title": "Completion Tokens",
+      "description": "Número de tokens na resposta"
+     },
+     "total_tokens": {
+      "type": "integer",
+      "title": "Total Tokens",
+      "description": "Total de tokens (prompt + completion)"
+     }
+    },
+    "type": "object",
+    "required": [
+     "prompt_tokens",
+     "completion_tokens",
+     "total_tokens"
+    ],
+    "title": "TokenUsage",
+    "description": "Informações de consumo de tokens"
+   },
+   "UpdateThreadRequest": {
+    "properties": {
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "domain": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Domain"
+     },
+     "is_favorite": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Is Favorite"
+     },
+     "workspace_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workspace Id"
+     },
+     "user_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "User Id"
+     }
+    },
+    "type": "object",
+    "title": "UpdateThreadRequest"
+   },
+   "UploadResponse": {
+    "properties": {
+     "upload_id": {
+      "type": "string",
+      "title": "Upload Id"
+     },
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "composer_batch_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Composer Batch Id"
+     },
+     "message_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message Id"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "filename": {
+      "type": "string",
+      "title": "Filename"
+     },
+     "file_size_bytes": {
+      "type": "integer",
+      "title": "File Size Bytes"
+     },
+     "mime_type": {
+      "type": "string",
+      "title": "Mime Type"
+     },
+     "hash": {
+      "type": "string",
+      "title": "Hash"
+     },
+     "upload_kind": {
+      "type": "string",
+      "title": "Upload Kind"
+     },
+     "processing_mode": {
+      "type": "string",
+      "title": "Processing Mode"
+     },
+     "pdf_content_mode": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pdf Content Mode"
+     },
+     "expires_at": {
+      "type": "string",
+      "title": "Expires At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "upload_id",
+     "thread_id",
+     "status",
+     "filename",
+     "file_size_bytes",
+     "mime_type",
+     "hash",
+     "upload_kind",
+     "processing_mode",
+     "expires_at"
+    ],
+    "title": "UploadResponse"
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   },
+   "VisualAnalysisRequest": {
+    "properties": {
+     "thread_id": {
+      "type": "string",
+      "title": "Thread Id"
+     },
+     "composer_batch_id": {
+      "type": "string",
+      "title": "Composer Batch Id"
+     },
+     "user_message_id": {
+      "type": "string",
+      "title": "User Message Id"
+     },
+     "user_id": {
+      "type": "string",
+      "title": "User Id"
+     },
+     "upload_ids": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Upload Ids"
+     },
+     "user_prompt": {
+      "type": "string",
+      "title": "User Prompt"
+     },
+     "language": {
+      "type": "string",
+      "title": "Language",
+      "default": "auto"
+     },
+     "api_key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Api Key"
+     },
+     "org_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Org Id"
+     },
+     "llm_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Llm Id"
+     },
+     "attachment_previews": {
+      "anyOf": [
+       {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Attachment Previews"
+     }
+    },
+    "type": "object",
+    "required": [
+     "thread_id",
+     "composer_batch_id",
+     "user_message_id",
+     "user_id",
+     "upload_ids",
+     "user_prompt"
+    ],
+    "title": "VisualAnalysisRequest"
+   },
+   "VisualAnalysisResponse": {
+    "properties": {
+     "visual_analysis_id": {
+      "type": "string",
+      "title": "Visual Analysis Id"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "events_url": {
+      "type": "string",
+      "title": "Events Url"
+     },
+     "analysis_scope": {
+      "type": "string",
+      "title": "Analysis Scope"
+     }
+    },
+    "type": "object",
+    "required": [
+     "visual_analysis_id",
+     "status",
+     "events_url",
+     "analysis_scope"
+    ],
+    "title": "VisualAnalysisResponse"
+   }
+  }
+ }
+}
