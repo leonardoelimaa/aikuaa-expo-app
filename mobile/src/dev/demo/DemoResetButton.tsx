@@ -9,7 +9,7 @@ import {
 } from 'react-native'
 import { StyleSheet, useUnistyles } from 'react-native-unistyles'
 import { getServices } from '@/services/serviceRegistry'
-import { resetDemoState } from '@/stores/demoStore'
+import { DEMO_TENANT_ID, DEMO_WORKSPACE_ID, resetDemoState } from '@/stores/demoStore'
 
 export interface DemoResetButtonProps {
   onReset?: () => void
@@ -32,10 +32,10 @@ export const DemoResetButton: React.FC<DemoResetButtonProps> = ({ onReset, testI
 
     setIsResetting(true)
     try {
-      const context = await resetDemoState()
+      await resetDemoState()
       await getServices().analytics.track('demo_reset', {
-        eventId: context.eventId,
-        tenantId: context.tenantId,
+        workspaceId: DEMO_WORKSPACE_ID,
+        tenantId: DEMO_TENANT_ID,
       })
       setLastResetAt(Date.now())
       onReset?.()
@@ -47,10 +47,10 @@ export const DemoResetButton: React.FC<DemoResetButtonProps> = ({ onReset, testI
   return (
     <View style={styles.container} testID={testID ?? 'demo-reset-button'}>
       <View style={styles.warningBox}>
-        <Text style={styles.warningTitle}>Acción de operador demo</Text>
+        <Text style={styles.warningTitle}>Ação do operador da demonstração</Text>
         <Text style={styles.warningText}>
-          Restablece conversaciones, sesión y contexto del evento de demostración. No visible para
-          usuarios finales.
+          Restaura conversas, sessão e contexto do workspace de demonstração. Não visível para
+          usuários finais.
         </Text>
       </View>
 
@@ -59,21 +59,21 @@ export const DemoResetButton: React.FC<DemoResetButtonProps> = ({ onReset, testI
         onPress={handlePress}
         disabled={isResetting}
         accessibilityRole="button"
-        accessibilityLabel="Restablecer demo"
-        accessibilityHint="Restaura el estado inicial del evento de demostración"
+        accessibilityLabel="Restaurar demonstração"
+        accessibilityHint="Restaura o estado inicial do workspace de demonstração"
         accessibilityState={{ busy: isResetting }}
         testID="demo-reset-pressable"
       >
         {isResetting ? (
           <ActivityIndicator size="small" color={theme.colors.white} testID="demo-reset-spinner" />
         ) : (
-          <Text style={styles.buttonText}>Restablecer demo</Text>
+          <Text style={styles.buttonText}>Restaurar demonstração</Text>
         )}
       </Pressable>
 
       {lastResetAt ? (
         <Text style={styles.confirmation} testID="demo-reset-confirmation">
-          Demo restablecida
+          Demonstração restaurada
         </Text>
       ) : null}
     </View>

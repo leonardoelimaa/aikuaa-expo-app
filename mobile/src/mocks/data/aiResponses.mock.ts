@@ -1,4 +1,4 @@
-import { AIChunk } from '../../services/types'
+import type { AIChunk } from '../../services/types'
 
 export interface AIResponseScenario {
   input: string
@@ -10,58 +10,98 @@ export interface AIResponseScenario {
 export const aiResponseScenarios: Record<string, AIResponseScenario> = {
   success: {
     input: 'hola',
-    description: 'Respuesta de texto simple exitosa.',
+    description: 'Retorna uma resposta determinística de demonstração.',
     expectedChunks: [
-      { type: 'text', content: 'Esta es una respuesta determinista de demostración.' },
+      {
+        type: 'text',
+        content: 'Esta é uma resposta determinística de demonstração.',
+      },
       { type: 'done' },
     ],
   },
   thinking: {
     input: 'pensando',
-    description: 'Emite un chunk de pensamiento antes de responder.',
+    description: 'Emite pensamento antes da resposta determinística.',
     expectedChunks: [
-      { type: 'thinking', content: 'Analizando tu pregunta...' },
-      { type: 'text', content: 'Esta es una respuesta determinista de demostración.' },
+      { type: 'thinking', content: 'Analisando sua pergunta...' },
+      {
+        type: 'text',
+        content: 'Esta é uma resposta determinística de demonstração.',
+      },
       { type: 'done' },
     ],
   },
   companies: {
     input: 'empresas',
-    description: 'Devuelve tarjetas de empresa y un texto.',
+    description: 'Retorna somente as empresas do workspace ativo.',
     expectedChunks: [
       {
         type: 'companies',
-        companies: [
-          { id: 'comp-acme', name: 'Acme Corp', industry: 'Manufactura' },
-          { id: 'comp-beta', name: 'Beta Labs', industry: 'Salud' },
-        ],
+        companies: [{ id: 'comp-acme', name: 'Acme', industry: 'Tecnologia' }],
       },
-      { type: 'text', content: 'Aquí tienes algunas empresas relacionadas.' },
+      {
+        type: 'text',
+        content: 'Aqui estão algumas empresas relacionadas.',
+      },
       { type: 'done' },
     ],
   },
   error: {
-    input: 'error',
-    description: 'Simula un error del asistente.',
-    expectedChunks: [{ type: 'error', code: 'AI_ERROR', message: 'Error simulado del asistente.' }],
+    input: 'erro',
+    description: 'Retorna um erro determinístico do assistente.',
+    expectedChunks: [
+      {
+        type: 'error',
+        code: 'AI_ERROR',
+        message: 'Erro simulado do assistente.',
+      },
+    ],
   },
   empty: {
     input: '',
-    description: 'Mensaje vacío: no-answer genérico.',
+    description: 'Retorna a resposta vazia padrão.',
     expectedChunks: [
-      { type: 'text', content: 'No tengo una respuesta para eso.' },
+      { type: 'text', content: 'Não tenho uma resposta para isso.' },
       { type: 'done' },
     ],
   },
   offline: {
     input: 'hola',
     offline: true,
-    description: 'Simula falta de conexión.',
-    expectedChunks: [{ type: 'error', code: 'OFFLINE', message: 'No hay conexión disponible.' }],
+    description: 'Retorna erro quando não há conexão.',
+    expectedChunks: [
+      {
+        type: 'error',
+        code: 'OFFLINE',
+        message: 'Não há conexão disponível.',
+      },
+    ],
   },
   noAnswer: {
-    input: 'no se',
-    description: 'Consulta sin respuesta conocida.',
+    input: 'não sei',
+    description: 'Finaliza sem conteúdo quando não há resposta.',
     expectedChunks: [{ type: 'done' }],
+  },
+  timeout: {
+    input: 'timeout',
+    description: 'Retorna erro quando o servidor demora demais.',
+    expectedChunks: [
+      {
+        type: 'error',
+        code: 'TIMEOUT',
+        message: 'O servidor demorou demais para responder.',
+      },
+    ],
+  },
+  backend: {
+    input: 'servidor',
+    description: 'Retorna erro quando o backend está indisponível.',
+    expectedChunks: [
+      {
+        type: 'error',
+        code: 'BACKEND_DOWN',
+        message: 'Não foi possível conectar ao servidor.',
+      },
+    ],
   },
 }

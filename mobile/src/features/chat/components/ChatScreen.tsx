@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated'
 import { StyleSheet } from 'react-native-unistyles'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { useAppContext } from '@/context/AppContext'
 import { useChat } from '../hooks/useChat'
 import { EmptyState } from './states'
 import { SuggestionPrompt } from './ChatWelcome'
@@ -15,7 +16,7 @@ export interface ChatScreenProps {
   offline?: boolean
 }
 
-export const ChatScreen: React.FC<ChatScreenProps> = ({ offline = false }) => {
+const WorkspaceChatScreen: React.FC<ChatScreenProps> = ({ offline = false }) => {
   const { state, sendMessage, retryLastMessage } = useChat({ offline })
   const [inputValue, setInputValue] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -96,6 +97,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ offline = false }) => {
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
+}
+
+export const ChatScreen: React.FC<ChatScreenProps> = (props) => {
+  const { context, revision } = useAppContext()
+  const incarnation = `${context?.workspaceId ?? 'unresolved'}:${revision}`
+
+  if (!context) return <SafeAreaView testID="chat-screen" />
+
+  return <WorkspaceChatScreen key={incarnation} {...props} />
 }
 
 const styles = StyleSheet.create((theme) => ({

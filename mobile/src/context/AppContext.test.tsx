@@ -1,76 +1,81 @@
 import { act, renderHook } from '@testing-library/react-native'
 import React from 'react'
 import { AppContextProvider, useAppContext } from './AppContext'
-import { resolveEventContext } from './resolveEvent'
 
 describe('AppContext', () => {
-  describe('resolveEventContext', () => {
-    it('returns the preconfigured demo event by default', () => {
-      const context = resolveEventContext()
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AppContextProvider restoreSelection={async () => null}>{children}</AppContextProvider>
+  )
 
-      expect(context.mode).toBe('event')
-      expect(context.eventId).toBe('aikuaa-demo-event')
-      expect(context.tenantId).toBe('aikuaa-demo-tenant')
-      expect(context.companyId).toBe('aikuaa-demo-company')
-    })
+  it('starts without a resolved workspace', async () => {
+    const { result } = await renderHook(() => useAppContext(), { wrapper })
 
-    it('accepts a deep-link / QR payload without changing the architecture', () => {
-      const context = resolveEventContext({
-        eventId: 'deep-link-event',
-        tenantId: 'deep-link-tenant',
-        companyId: 'deep-link-company',
-      })
-
-      expect(context.mode).toBe('event')
-      expect(context.eventId).toBe('deep-link-event')
-      expect(context.tenantId).toBe('deep-link-tenant')
-      expect(context.companyId).toBe('deep-link-company')
-    })
+    expect(result.current.context).toBeNull()
+    expect(result.current.isResolved).toBe(false)
+    expect(result.current.revision).toBe(0)
   })
 
-  describe('useAppContext', () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AppContextProvider>{children}</AppContextProvider>
-    )
+  it('enters the pinned Acme demo workspace', async () => {
+    const { result } = await renderHook(() => useAppContext(), { wrapper })
 
-    it('starts with the demo event context unresolved', async () => {
-      const { result } = await renderHook(() => useAppContext(), { wrapper })
+    await act(async () => result.current.enterDemo())
 
-      expect(result.current.context.eventId).toBe('aikuaa-demo-event')
-      expect(result.current.isResolved).toBe(false)
+    expect(result.current.isResolved).toBe(true)
+    expect(result.current.context).toEqual({
+      mode: 'company',
+      workspaceId: 'workspace-acme',
+      companyId: 'comp-acme',
+      tenantId: 'aikuaa-demo-tenant',
+    })
+    expect(result.current.context).not.toHaveProperty('eventId')
+  })
+
+  it('selects the pinned Beta workspace and advances the revision', async () => {
+    const { result } = await renderHook(() => useAppContext(), { wrapper })
+
+    await act(async () => result.current.enterDemo())
+    const priorRevision = result.current.revision
+    await act(async () => result.current.selectWorkspace('workspace-beta'))
+
+    expect(result.current.context).toEqual({
+      mode: 'company',
+      workspaceId: 'workspace-beta',
+      companyId: 'comp-beta',
+      tenantId: 'aikuaa-demo-tenant',
+    })
+    expect(result.current.revision).toBeGreaterThan(priorRevision)
+  })
+
+  it('resets to an unresolved workspace and advances the revision', async () => {
+    const { result } = await renderHook(() => useAppContext(), { wrapper })
+
+    await act(async () => result.current.enterDemo())
+    const priorRevision = result.current.revision
+    await act(async () => result.current.resetDemo())
+
+    expect(result.current.context).toBeNull()
+    expect(result.current.isResolved).toBe(false)
+    expect(result.current.revision).toBeGreaterThan(priorRevision)
+  })
+
+  it('rejects legacy event identifiers without changing the active workspace', async () => {
+    const { result } = await renderHook(() => useAppContext(), { wrapper })
+
+    await act(async () => result.current.enterDemo())
+    const priorContext = result.current.context
+    const priorRevision = result.current.revision
+    let error: unknown
+
+    await act(async () => {
+      try {
+        await result.current.selectWorkspace('aikuaa-demo-event')
+      } catch (caught) {
+        error = caught
+      }
     })
 
-    it('marks the context resolved when resolveEvent is called', async () => {
-      const { result } = await renderHook(() => useAppContext(), { wrapper })
-
-      await act(() => {
-        result.current.resolveEvent()
-      })
-
-      expect(result.current.isResolved).toBe(true)
-      expect(result.current.context.eventId).toBe('aikuaa-demo-event')
-    })
-
-    it('can resolve a custom event via the deep-link code path', async () => {
-      const { result } = await renderHook(() => useAppContext(), { wrapper })
-
-      await act(() => {
-        result.current.resolveEvent({ eventId: 'qr-scanned-event' })
-      })
-
-      expect(result.current.isResolved).toBe(true)
-      expect(result.current.context.eventId).toBe('qr-scanned-event')
-    })
-
-    it('resolves the demo event through resolveDemoEvent', async () => {
-      const { result } = await renderHook(() => useAppContext(), { wrapper })
-
-      await act(() => {
-        result.current.resolveDemoEvent()
-      })
-
-      expect(result.current.isResolved).toBe(true)
-      expect(result.current.context.eventId).toBe('aikuaa-demo-event')
-    })
+    expect(error).toBeInstanceOf(Error)
+    expect(result.current.context).toEqual(priorContext)
+    expect(result.current.revision).toBe(priorRevision)
   })
 })

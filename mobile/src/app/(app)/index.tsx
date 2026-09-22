@@ -1,6 +1,5 @@
 import { Redirect } from 'expo-router'
-import React from 'react'
 
-export default function IndexRedirect() {
-  return <Redirect href="/(app)/chat" />
+export default function AppCompatibilityRoute() {
+  return <Redirect href="/(app)/(tabs)/assistant" />
 }

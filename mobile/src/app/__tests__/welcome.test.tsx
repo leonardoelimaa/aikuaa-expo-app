@@ -1,30 +1,19 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
-import WelcomeScreen from '../welcome'
-import { AppContextProvider } from '@/context/AppContext'
-
-const mockReplace = jest.fn()
+import { render, screen } from '@testing-library/react-native'
+import WelcomeCompatibilityRoute from '../welcome'
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  Redirect: ({ href }: { href: string }) => {
+    const ReactModule = require('react')
+    const { Text } = require('react-native')
+    return ReactModule.createElement(Text, { testID: 'redirect' }, href)
+  },
 }))
 
-describe('WelcomeScreen', () => {
-  beforeEach(() => {
-    mockReplace.mockClear()
-  })
+describe('welcome compatibility route', () => {
+  it('redirects one way to the canonical entry', async () => {
+    await render(<WelcomeCompatibilityRoute />)
 
-  it('resolves the demo event context and navigates to the Chat tab', async () => {
-    await render(
-      <AppContextProvider>
-        <WelcomeScreen />
-      </AppContextProvider>,
-    )
-
-    fireEvent.press(screen.getByText('Entrar al evento demo'))
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/(app)/chat')
-    })
+    expect(screen.getByTestId('redirect')).toHaveTextContent('/')
   })
 })

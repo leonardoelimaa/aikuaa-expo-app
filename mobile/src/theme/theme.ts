@@ -9,6 +9,22 @@ import { extractPrimaryFontFamily } from './fonts'
 import { resolveColor } from './resolveColor'
 
 const colors = {
+  canvas: resolveColor(rawColors.canvas),
+  surface: resolveColor(rawColors.surface),
+  surfaceMuted: resolveColor(rawColors.surfaceMuted),
+  surfaceSunken: resolveColor(rawColors.surfaceSunken),
+  content: resolveColor(rawColors.content),
+  contentSubtle: resolveColor(rawColors.contentSubtle),
+  contentMuted: resolveColor(rawColors.contentMuted),
+  action: resolveColor(rawColors.action),
+  actionPressed: resolveColor(rawColors.actionPressed),
+  actionSecondary: resolveColor(rawColors.actionSecondary),
+  border: resolveColor(rawColors.border),
+  focusRing: resolveColor(rawColors.focusRing),
+  disabledSurface: resolveColor(rawColors.disabledSurface),
+  disabledContent: resolveColor(rawColors.disabledContent),
+  proofSurface: resolveColor(rawColors.proofSurface),
+  onProofSurface: resolveColor(rawColors.onProofSurface),
   background: resolveColor(rawColors.background),
   backgroundSecondary: resolveColor(rawColors.backgroundSecondary),
   foreground: resolveColor(rawColors.foreground),

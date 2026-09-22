@@ -21,7 +21,7 @@ describe('StructuredResponse', () => {
     expect(screen.getByTestId('structured-response-company-list')).toBeTruthy()
     expect(screen.getByText(mockCompanies[0].name)).toBeTruthy()
     expect(screen.getByText(mockCompanies[1].name)).toBeTruthy()
-    expect(screen.queryByText(mockCompanies[2].name)).toBeNull()
+    expect(screen.getAllByTestId(/company-card-/)).toHaveLength(2)
   })
 
   it('renders a comparison table', async () => {

@@ -10,30 +10,30 @@ import {
 import { StyleSheet } from 'react-native-unistyles'
 
 interface WelcomeProps {
-  onEnterEvent: () => void
+  onEnterDemo: () => void
 }
 
-export const Welcome: React.FC<WelcomeProps> = ({ onEnterEvent }) => (
+export const Welcome: React.FC<WelcomeProps> = ({ onEnterDemo }) => (
   <ScrollView
     contentContainerStyle={styles.container}
     accessible
-    accessibilityLabel="Bienvenida a Aikuaa"
+    accessibilityLabel="Boas-vindas à Aikuaa"
   >
     <View style={styles.content}>
-      <Text style={styles.headline}>Simplifica la presencia de tu evento</Text>
+      <Text style={styles.headline}>O conhecimento da sua empresa, acessível</Text>
       <Text style={styles.valueProp}>
-        Aikuaa conecta asistentes, voluntarios y organizadores en un solo lugar.
+        Converse com o assistente da sua empresa em uma demonstração segura e determinística.
       </Text>
     </View>
 
     <TouchableOpacity
       style={styles.cta}
-      onPress={onEnterEvent}
+      onPress={onEnterDemo}
       activeOpacity={0.8}
       accessibilityRole="button"
-      accessibilityLabel="Entrar al evento de demostración"
+      accessibilityLabel="Entrar na demonstração"
     >
-      <Text style={styles.ctaText}>Entrar al evento demo</Text>
+      <Text style={styles.ctaText}>Entrar na demonstração</Text>
     </TouchableOpacity>
   </ScrollView>
 )

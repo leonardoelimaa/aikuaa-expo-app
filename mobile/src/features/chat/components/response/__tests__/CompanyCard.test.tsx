@@ -35,7 +35,7 @@ describe('CompanyCard', () => {
   })
 
   it('calls onPress when pressed', async () => {
-    const company = mockCompanies[2]
+    const company = mockCompanies[1]
     const onPress = jest.fn()
     await render(<CompanyCard company={company} onPress={onPress} />)
 

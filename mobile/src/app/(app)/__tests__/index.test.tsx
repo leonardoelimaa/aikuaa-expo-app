@@ -1,19 +1,19 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
-import HomeScreen from '../index'
+import AppCompatibilityRoute from '../index'
 
-jest.mock('expo-router', () => {
-  const { Text } = require('react-native')
+jest.mock('expo-router', () => ({
+  Redirect: ({ href }: { href: string }) => {
+    const ReactModule = require('react')
+    const { Text } = require('react-native')
+    return ReactModule.createElement(Text, { testID: 'redirect' }, href)
+  },
+}))
 
-  return {
-    Redirect: ({ href }: { href: string }) => <Text testID="redirect">{href}</Text>,
-  }
-})
+describe('app compatibility route', () => {
+  it('redirects to the canonical assistant route', async () => {
+    await render(<AppCompatibilityRoute />)
 
-describe('HomeScreen', () => {
-  it('redirects to the Chat tab', async () => {
-    await render(<HomeScreen />)
-
-    expect(screen.getByTestId('redirect').props.children).toBe('/(app)/chat')
+    expect(screen.getByTestId('redirect')).toHaveTextContent('/(app)/(tabs)/assistant')
   })
 })

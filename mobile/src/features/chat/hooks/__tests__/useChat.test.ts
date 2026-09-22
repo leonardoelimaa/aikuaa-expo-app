@@ -1,5 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native'
-import { useChat } from '../useChat'
+import React from 'react'
+import { AppContextProvider, useAppContext } from '@/context/AppContext'
+import { useChat, type UseChatOptions } from '../useChat'
 import { getServices, resetServices, createMockServices } from '@/services/serviceRegistry'
 import { AIChunk } from '@/services/types'
 
@@ -12,6 +14,24 @@ const mockedGetServices = jest.mocked(getServices)
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+async function renderDemoChat(options: UseChatOptions = {}) {
+  const hook = await renderHook(
+    () => ({
+      ...useChat(options),
+      app: useAppContext(),
+    }),
+    {
+      wrapper: ({ children }) => React.createElement(AppContextProvider, null, children),
+    },
+  )
+
+  await act(async () => {
+    await hook.result.current.app.enterDemo()
+  })
+
+  return hook
+}
+
 describe('useChat', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -20,7 +40,7 @@ describe('useChat', () => {
   })
 
   it('starts with an empty idle state', async () => {
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     expect(result.current.state.messages).toEqual([])
     expect(result.current.state.status).toBe('idle')
@@ -32,7 +52,7 @@ describe('useChat', () => {
     mockedGetServices.mockReturnValue(services)
     const streamSpy = jest.spyOn(services.ai, 'streamMessage')
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('   ')
@@ -54,7 +74,7 @@ describe('useChat', () => {
       }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('hola')
@@ -88,7 +108,7 @@ describe('useChat', () => {
       yield { type: 'done' }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       result.current.sendMessage('hola')
@@ -123,7 +143,7 @@ describe('useChat', () => {
       yield { type: 'done' }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       result.current.sendMessage('pensando')
@@ -157,7 +177,7 @@ describe('useChat', () => {
       }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('error')
@@ -181,7 +201,7 @@ describe('useChat', () => {
       }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('no se')
@@ -193,7 +213,7 @@ describe('useChat', () => {
       expect(result.current.state.status).toBe('idle')
       expect(result.current.state.error).toEqual({
         code: 'NO_ANSWER',
-        message: 'No tengo una respuesta para eso.',
+        message: 'A resposta não retornou conteúdo.',
       })
     })
   })
@@ -217,7 +237,7 @@ describe('useChat', () => {
       yield { type: 'done' }
     })
 
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('hola')
@@ -243,7 +263,7 @@ describe('useChat', () => {
   })
 
   it('sets a TIMEOUT error for the timeout keyword', async () => {
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('timeout')
@@ -252,13 +272,13 @@ describe('useChat', () => {
     await waitFor(() => {
       expect(result.current.state.error).toEqual({
         code: 'TIMEOUT',
-        message: 'El servidor tardó demasiado en responder.',
+        message: 'O servidor demorou demais para responder.',
       })
     })
   })
 
   it('sets a BACKEND_DOWN error for the backend keyword', async () => {
-    const { result } = await renderHook(() => useChat())
+    const { result } = await renderDemoChat()
 
     await act(async () => {
       await result.current.sendMessage('backend down')
@@ -267,7 +287,7 @@ describe('useChat', () => {
     await waitFor(() => {
       expect(result.current.state.error).toEqual({
         code: 'BACKEND_DOWN',
-        message: 'No se pudo conectar con el servidor.',
+        message: 'Não foi possível conectar ao servidor.',
       })
     })
   })

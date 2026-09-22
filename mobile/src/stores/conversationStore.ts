@@ -1,42 +1,53 @@
-import { Conversation } from '../services/types'
-
-// NOTE: Module-level mutable state below is temporary demo infrastructure
-// and will be replaced by persistent stores in a later PR.
+import type { Conversation } from '../services/types'
+import type { ConversationId, WorkspaceId } from '../types/app'
 
 let conversations: Conversation[] = []
 
+const cloneConversation = (conversation: Conversation): Conversation => ({
+  ...conversation,
+  messages: conversation.messages.map((message) => ({ ...message })),
+})
+
 export const conversationStore = {
-  async getAll(): Promise<Conversation[]> {
-    return [...conversations]
+  async getAll(workspaceId?: WorkspaceId) {
+    return conversations
+      .filter(
+        (conversation) => workspaceId === undefined || conversation.workspaceId === workspaceId,
+      )
+      .map(cloneConversation)
   },
-
-  async getById(id: string): Promise<Conversation | null> {
-    return conversations.find((conversation) => conversation.id === id) ?? null
+  async getById(id: ConversationId | string, workspaceId?: WorkspaceId) {
+    const conversation = conversations.find(
+      (candidate) =>
+        candidate.id === id && (workspaceId === undefined || candidate.workspaceId === workspaceId),
+    )
+    return conversation ? cloneConversation(conversation) : null
   },
-
-  async add(conversation: Conversation): Promise<Conversation> {
-    conversations.push(conversation)
-    return conversation
+  async add(conversation: Conversation) {
+    if (conversations.some((candidate) => candidate.id === conversation.id))
+      throw new Error(`Conversation already exists: ${conversation.id}`)
+    const owned = cloneConversation(conversation)
+    conversations.push(owned)
+    return cloneConversation(owned)
   },
-
-  async update(conversation: Conversation): Promise<Conversation> {
-    const index = conversations.findIndex((c) => c.id === conversation.id)
-    if (index === -1) {
-      throw new Error(`Conversation not found: ${conversation.id}`)
-    }
-    conversations[index] = conversation
-    return conversation
+  async update(conversation: Conversation) {
+    const index = conversations.findIndex((candidate) => candidate.id === conversation.id)
+    if (index === -1) throw new Error(`Conversation not found: ${conversation.id}`)
+    if (conversations[index].workspaceId !== conversation.workspaceId)
+      throw new Error('Conversation workspace ownership is immutable.')
+    conversations[index] = cloneConversation(conversation)
+    return cloneConversation(conversations[index])
   },
-
-  async remove(id: string): Promise<void> {
-    conversations = conversations.filter((conversation) => conversation.id !== id)
+  async remove(id: ConversationId | string, workspaceId?: WorkspaceId) {
+    conversations = conversations.filter(
+      (candidate) =>
+        candidate.id !== id || (workspaceId !== undefined && candidate.workspaceId !== workspaceId),
+    )
   },
-
-  async clear(): Promise<void> {
+  async clear() {
     conversations = []
   },
-
-  async seed(seed: Conversation[]): Promise<void> {
-    conversations = [...seed]
+  async seed(seed: Conversation[]) {
+    conversations = seed.map(cloneConversation)
   },
 }

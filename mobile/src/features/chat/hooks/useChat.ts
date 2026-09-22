@@ -1,185 +1,223 @@
-import { useCallback, useEffect, useMemo, useRef, useReducer } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useAppContext } from '@/context/AppContext'
 import { getServices } from '@/services/serviceRegistry'
-import { AIChunk } from '@/services/types'
-import { ChatState, initialChatState } from '../types'
+import type { AIChunk, Conversation, Message } from '@/services/types'
+import { asConversationId, type ConversationId } from '@/types/app'
 import { chatReducer } from '../state/chatReducer'
-
-const BATCH_FLUSH_MS = 60
+import { initialChatState } from '../types'
 
 export interface UseChatOptions {
   offline?: boolean
 }
+let conversationSequence = 0
 
-export interface UseChatReturn {
-  state: ChatState
-  sendMessage: (content: string) => Promise<void>
-  retryLastMessage: () => Promise<void>
-  reset: () => void
-}
-
-export function useChat(options: UseChatOptions = {}): UseChatReturn {
-  const { offline = false } = options
+export function useChat(options: UseChatOptions = {}) {
+  const { context, revision } = useAppContext()
   const [state, dispatch] = useReducer(chatReducer, initialChatState)
-  const bufferRef = useRef('')
-  const flushIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const abortRef = useRef(false)
+  const tokenRef = useRef(0)
+  const controllerRef = useRef<AbortController | null>(null)
+  const [conversationId] = useState<ConversationId>(() =>
+    asConversationId(`conversation-${++conversationSequence}`),
+  )
+  const incarnation = `${context?.workspaceId ?? 'unresolved'}:${revision}`
+  const incarnationRef = useRef(incarnation)
 
-  const flushBuffer = useCallback(() => {
-    if (bufferRef.current === '') return
-    const payload = bufferRef.current
-    bufferRef.current = ''
-    dispatch({ type: 'appendStreaming', payload })
+  const invalidate = useCallback(() => {
+    tokenRef.current += 1
+    controllerRef.current?.abort()
+    controllerRef.current = null
   }, [])
 
-  const startBatching = useCallback(() => {
-    if (flushIntervalRef.current) return
-    flushIntervalRef.current = setInterval(() => {
-      flushBuffer()
-    }, BATCH_FLUSH_MS)
-  }, [flushBuffer])
+  useEffect(() => {
+    invalidate()
+    incarnationRef.current = incarnation
+    dispatch({ type: 'reset' })
+    return invalidate
+  }, [incarnation, invalidate])
 
-  const stopBatching = useCallback(() => {
-    if (flushIntervalRef.current) {
-      clearInterval(flushIntervalRef.current)
-      flushIntervalRef.current = null
-    }
-  }, [])
-
-  const reset = useCallback(() => {
-    abortRef.current = true
-    stopBatching()
-    bufferRef.current = ''
-    dispatch({ type: 'resetStream' })
-  }, [stopBatching])
-
-  const finalizeNoAnswer = useCallback(() => {
-    dispatch({
-      type: 'setError',
-      payload: {
-        code: 'NO_ANSWER',
-        message: 'No tengo una respuesta para eso.',
-      },
-    })
-    dispatch({ type: 'resetStream' })
-  }, [])
-
-  const finalizeCompletion = useCallback((createdAt: string) => {
-    dispatch({ type: 'completeStreaming', payload: { createdAt } })
-  }, [])
+  const persist = useCallback(
+    async (
+      requestToken: number,
+      requestIncarnation: string,
+      conversationId: ConversationId,
+      userContent: string,
+      assistantContent: string,
+      signal: AbortSignal,
+    ) => {
+      if (
+        !context ||
+        tokenRef.current !== requestToken ||
+        incarnationRef.current !== requestIncarnation
+      )
+        return
+      const service = getServices().conversation
+      let conversation = await service.getConversation(context.workspaceId, conversationId)
+      if (tokenRef.current !== requestToken || incarnationRef.current !== requestIncarnation) return
+      if (!conversation) {
+        conversation = await service.createConversation(
+          context.workspaceId,
+          {
+            id: conversationId,
+            title: userContent.slice(0, 60) || 'Nova conversa',
+          },
+          { signal },
+        )
+      }
+      if (tokenRef.current !== requestToken || incarnationRef.current !== requestIncarnation) return
+      const now = new Date().toISOString()
+      const appended: Message[] = [
+        ...conversation.messages,
+        {
+          id: `${conversationId}-user-${requestToken}`,
+          role: 'user',
+          content: userContent,
+          createdAt: now,
+        },
+        {
+          id: `${conversationId}-assistant-${requestToken}`,
+          role: 'assistant',
+          content: assistantContent,
+          createdAt: now,
+        },
+      ]
+      const updated: Conversation = {
+        ...conversation,
+        workspaceId: context.workspaceId,
+        messages: appended,
+      }
+      await service.saveConversation(context.workspaceId, updated, { signal })
+    },
+    [context],
+  )
 
   const streamContent = useCallback(
     async (content: string) => {
-      let sawThinking = false
-      let sawText = false
-      let sawError = false
+      if (!context) throw new Error('Select a workspace before sending a message.')
+      invalidate()
+      const requestToken = ++tokenRef.current
+      const requestIncarnation = incarnation
+      const requestContext = { ...context }
+      const controller = new AbortController()
+      controllerRef.current = controller
+      const isCurrent = () =>
+        tokenRef.current === requestToken &&
+        incarnationRef.current === requestIncarnation &&
+        !controller.signal.aborted
+      let assistantContent = ''
+      let terminalError = false
 
       try {
-        const stream = getServices().ai.streamMessage({ message: content, offline })
-
-        for await (const chunk of stream) {
-          if (abortRef.current) break
-          handleChunk(chunk)
+        await getServices().analytics.track('message_sent', {
+          offline: options.offline ?? false,
+          messageLength: content.length,
+          workspaceId: requestContext.workspaceId,
+          conversationId,
+        })
+        if (!isCurrent()) return
+        for await (const chunk of getServices().ai.streamMessage({
+          message: content,
+          conversationId,
+          context: requestContext,
+          offline: options.offline,
+          signal: controller.signal,
+        })) {
+          if (!isCurrent()) return
+          const guardedChunk: AIChunk = chunk
+          if (guardedChunk.type === 'thinking') dispatch({ type: 'setThinking', payload: true })
+          if (guardedChunk.type === 'text') {
+            assistantContent += guardedChunk.content
+            if (!isCurrent()) return
+            dispatch({ type: 'appendStreaming', payload: guardedChunk.content })
+          }
+          if (guardedChunk.type === 'companies') {
+            const contentChunk = guardedChunk.companies.map((company) => company.name).join(', ')
+            if (contentChunk) {
+              assistantContent += contentChunk
+              if (!isCurrent()) return
+              dispatch({ type: 'appendStreaming', payload: contentChunk })
+            }
+          }
+          if (guardedChunk.type === 'error') {
+            terminalError = true
+            if (!isCurrent()) return
+            dispatch({
+              type: 'setError',
+              payload: { code: guardedChunk.code, message: guardedChunk.message },
+            })
+            return
+          }
         }
-
-        if (abortRef.current) return
-
-        flushBuffer()
-        stopBatching()
-
-        if (sawError) {
+        if (!isCurrent()) return
+        if (!assistantContent) {
+          dispatch({
+            type: 'setError',
+            payload: { code: 'NO_ANSWER', message: 'A resposta não retornou conteúdo.' },
+          })
           return
         }
-
-        if (!sawText && !sawThinking) {
-          finalizeNoAnswer()
-        } else {
-          finalizeCompletion(new Date().toISOString())
-        }
+        dispatch({ type: 'completeStreaming', payload: { createdAt: new Date().toISOString() } })
+        if (!isCurrent()) return
+        await persist(
+          requestToken,
+          requestIncarnation,
+          conversationId,
+          content,
+          assistantContent,
+          controller.signal,
+        )
       } catch (error) {
-        flushBuffer()
-        stopBatching()
+        if (!isCurrent() || (error instanceof Error && error.name === 'AbortError')) return
         dispatch({
           type: 'setError',
           payload: {
             code: 'STREAM_ERROR',
-            message: error instanceof Error ? error.message : 'Error desconocido.',
+            message:
+              error instanceof Error ? error.message : 'Não foi possível concluir a solicitação.',
           },
         })
-        dispatch({ type: 'resetStream' })
-      }
-
-      function handleChunk(chunk: AIChunk) {
-        switch (chunk.type) {
-          case 'thinking':
-            sawThinking = true
-            dispatch({ type: 'setThinking', payload: true })
-            break
-          case 'text':
-            sawText = true
-            bufferRef.current += chunk.content
-            startBatching()
-            break
-          case 'error':
-            sawError = true
-            flushBuffer()
-            stopBatching()
-            dispatch({ type: 'setError', payload: { code: chunk.code, message: chunk.message } })
-            dispatch({ type: 'resetStream' })
-            break
-          case 'done':
-            break
-          case 'companies':
-          default:
-            break
-        }
+      } finally {
+        if (isCurrent() && !terminalError) controllerRef.current = null
       }
     },
-    [offline, flushBuffer, startBatching, stopBatching, finalizeNoAnswer, finalizeCompletion],
+    [context, conversationId, incarnation, invalidate, options.offline, persist],
   )
 
   const sendMessage = useCallback(
     async (content: string) => {
-      const trimmed = content.trim()
-      if (trimmed === '') return
-
-      abortRef.current = false
-      const createdAt = new Date().toISOString()
-      dispatch({ type: 'sendMessage', payload: { content: trimmed, createdAt } })
-
-      getServices().analytics.track('message_sent', {
-        offline,
-        messageLength: trimmed.length,
+      const normalized = content.trim()
+      if (!normalized) return
+      dispatch({
+        type: 'sendMessage',
+        payload: { content: normalized, createdAt: new Date().toISOString() },
       })
-
-      await streamContent(trimmed)
+      await streamContent(normalized)
     },
-    [offline, streamContent],
+    [streamContent],
   )
 
-  const retryLastMessage = useCallback(async () => {
+  const retry = useCallback(async () => {
     const lastUserMessage = [...state.messages].reverse().find((message) => message.role === 'user')
     if (!lastUserMessage) return
-
-    abortRef.current = false
     dispatch({ type: 'retryLastMessage' })
-
     await streamContent(lastUserMessage.content)
   }, [state.messages, streamContent])
 
-  useEffect(() => {
-    return () => {
-      abortRef.current = true
-      stopBatching()
-    }
-  }, [stopBatching])
+  const reset = useCallback(() => {
+    invalidate()
+    dispatch({ type: 'reset' })
+  }, [invalidate])
 
   return useMemo(
     () => ({
       state,
+      ...state,
+      isStreaming: state.status === 'streaming',
+      conversationId,
       sendMessage,
-      retryLastMessage,
+      retry,
+      retryLastMessage: retry,
       reset,
     }),
-    [state, sendMessage, retryLastMessage, reset],
+    [conversationId, reset, retry, sendMessage, state],
   )
 }

@@ -1,4 +1,4 @@
-import { Message } from '@/services/types'
+import type { Message } from '@/services/types'
 
 export type ChatMessage = Message
 
@@ -7,15 +7,13 @@ export interface ChatError {
   message: string
 }
 
-export type ChatStatus = 'idle' | 'streaming'
-
 export interface ChatState {
-  messages: ChatMessage[]
+  messages: Message[]
   streamingMessageId: string | null
   streamingContent: string
   isThinking: boolean
   error: ChatError | null
-  status: ChatStatus
+  status: 'idle' | 'streaming'
 }
 
 export type ChatAction =
@@ -25,6 +23,7 @@ export type ChatAction =
   | { type: 'setError'; payload: ChatError }
   | { type: 'completeStreaming'; payload: { createdAt: string } }
   | { type: 'resetStream' }
+  | { type: 'reset' }
   | { type: 'retryLastMessage' }
 
 export const initialChatState: ChatState = {
@@ -36,30 +35,23 @@ export const initialChatState: ChatState = {
   status: 'idle',
 }
 
+let messageSequence = 0
+
+const nextMessageId = () => `msg-${++messageSequence}`
+const timestamp = () => new Date().toISOString()
+
 export function createUserMessage(
   content: string,
-  createdAt = new Date().toISOString(),
-): ChatMessage {
-  return {
-    id: generateMessageId(),
-    role: 'user',
-    content,
-    createdAt,
-  }
+  createdAt = timestamp(),
+  id = nextMessageId(),
+): Message {
+  return { id, role: 'user', content, createdAt }
 }
 
 export function createAssistantMessage(
   content: string,
-  createdAt = new Date().toISOString(),
-): ChatMessage {
-  return {
-    id: generateMessageId(),
-    role: 'assistant',
-    content,
-    createdAt,
-  }
-}
-
-function generateMessageId(): string {
-  return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  id = nextMessageId(),
+  createdAt = timestamp(),
+): Message {
+  return { id, role: 'assistant', content, createdAt }
 }

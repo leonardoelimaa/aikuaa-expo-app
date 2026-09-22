@@ -1,55 +1,78 @@
-import { ConversationService, Conversation, CreateConversationParams, Message } from './types'
+import type {
+  Conversation,
+  ConversationMutationOptions,
+  ConversationService,
+  CreateConversationParams,
+  Message,
+} from './types'
 import { conversationStore } from '../stores/conversationStore'
+import { asConversationId, requireWorkspaceId, type WorkspaceId } from '../types/app'
 
-function generateId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+let sequence = 0
+const generateId = (prefix: string) => `${prefix}-${++sequence}`
+const nowIso = () => new Date().toISOString()
+const abortError = () => {
+  const error = new Error('The operation was aborted.')
+  error.name = 'AbortError'
+  return error
 }
-
-function nowIso(): string {
-  return new Date().toISOString()
+const throwIfAborted = (signal?: AbortSignal) => {
+  if (signal?.aborted) throw abortError()
 }
-
-function createMessage(content: string): Message {
-  return {
-    id: generateId('msg'),
-    role: 'user',
-    content,
-    createdAt: nowIso(),
-  }
-}
+const createMessage = (content: string): Message => ({
+  id: generateId('msg'),
+  role: 'user',
+  content,
+  createdAt: nowIso(),
+})
 
 export function createMockConversationService(): ConversationService {
   return {
-    async listConversations(): Promise<Conversation[]> {
-      return conversationStore.getAll()
+    async listConversations(workspaceId: WorkspaceId | string) {
+      return conversationStore.getAll(requireWorkspaceId(workspaceId))
     },
-
-    async createConversation(params: CreateConversationParams): Promise<Conversation> {
+    async createConversation(
+      workspaceId: WorkspaceId | string,
+      params: CreateConversationParams,
+      options?: ConversationMutationOptions,
+    ) {
+      throwIfAborted(options?.signal)
+      const owner = requireWorkspaceId(workspaceId)
+      const timestamp = nowIso()
       const conversation: Conversation = {
-        id: generateId('conv'),
-        title: params.title ?? 'Nueva conversación',
-        createdAt: nowIso(),
-        updatedAt: nowIso(),
+        id: params.id ?? asConversationId(generateId('conv')),
+        workspaceId: owner,
+        title: params.title ?? 'Nova conversa',
+        createdAt: timestamp,
+        updatedAt: timestamp,
         messages: params.initialMessage ? [createMessage(params.initialMessage)] : [],
       }
-      await conversationStore.add(conversation)
-      return conversation
+      throwIfAborted(options?.signal)
+      return conversationStore.add(conversation)
     },
-
-    async getConversation(id: string): Promise<Conversation | null> {
-      return conversationStore.getById(id)
+    async getConversation(workspaceId: WorkspaceId | string, id) {
+      return conversationStore.getById(id, requireWorkspaceId(workspaceId))
     },
-
-    async saveConversation(conversation: Conversation): Promise<Conversation> {
-      const updated: Conversation = {
-        ...conversation,
-        updatedAt: nowIso(),
-      }
-      return conversationStore.update(updated)
+    async saveConversation(
+      workspaceId: WorkspaceId | string,
+      conversation: Conversation,
+      options?: ConversationMutationOptions,
+    ) {
+      throwIfAborted(options?.signal)
+      const owner = requireWorkspaceId(workspaceId)
+      const existing = await conversationStore.getById(conversation.id)
+      if (!existing) throw new Error(`Conversation not found: ${conversation.id}`)
+      if (existing.workspaceId !== owner || conversation.workspaceId !== owner)
+        throw new Error('Conversation workspace ownership is immutable.')
+      throwIfAborted(options?.signal)
+      return conversationStore.update({ ...conversation, workspaceId: owner, updatedAt: nowIso() })
     },
-
-    async deleteConversation(id: string): Promise<void> {
-      await conversationStore.remove(id)
+    async deleteConversation(workspaceId: WorkspaceId | string, id) {
+      const owner = requireWorkspaceId(workspaceId)
+      const existing = await conversationStore.getById(id)
+      if (existing && existing.workspaceId !== owner)
+        throw new Error('Conversation belongs to another workspace.')
+      await conversationStore.remove(id, owner)
     },
   }
 }

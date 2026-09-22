@@ -1,39 +1,111 @@
-import React from 'react'
-import { View, Text, type ViewStyle, type TextStyle } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StyleSheet } from 'react-native-unistyles'
-import { DemoResetButton } from '@/dev/demo/DemoResetButton'
+import { useAppContext } from '@/context/AppContext'
 
 export default function SettingsScreen() {
+  const router = useRouter()
+  const { context, resetDemo } = useAppContext()
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back()
+      return
+    }
+    router.replace('/(app)/(tabs)/assistant')
+  }
+
+  const handleExitDemo = async () => {
+    await resetDemo()
+    router.replace('/')
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Ajustes</Text>
-        <Text style={styles.subtitle}>Próximamente.</Text>
-        <DemoResetButton />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text accessibilityRole="header" style={styles.heading}>
+          Configurações
+        </Text>
+        <Text style={styles.body}>
+          {context
+            ? `Workspace selecionado: ${context.workspaceId}`
+            : 'Nenhum workspace selecionado'}
+        </Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          onPress={handleBack}
+          style={styles.secondaryButton}
+        >
+          <Text style={styles.secondaryButtonText}>Voltar</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Trocar workspace"
+          onPress={() => router.push('/(app)/(tabs)/workspace')}
+          style={styles.secondaryButton}
+        >
+          <Text style={styles.secondaryButtonText}>Trocar workspace</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Sair da demonstração"
+          onPress={() => void handleExitDemo()}
+          style={styles.primaryButton}
+        >
+          <Text style={styles.primaryButtonText}>Sair da demonstração</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create((theme) => ({
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  } satisfies ViewStyle,
   container: {
     flex: 1,
-    padding: theme.spacing[6],
-  } satisfies ViewStyle,
-  title: {
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    gap: theme.spacing[16],
+    padding: theme.spacing[24],
+  },
+  heading: {
+    color: theme.colors.foreground,
     fontFamily: theme.fonts.display,
     fontSize: theme.fontSizes[24],
-    color: theme.colors.foreground,
-    marginBottom: theme.spacing[3],
-  } satisfies TextStyle,
-  subtitle: {
+  },
+  body: {
+    color: theme.colors.secondary,
     fontFamily: theme.fonts.body,
     fontSize: theme.fontSizes[16],
-    color: theme.colors.secondary,
-  } satisfies TextStyle,
+  },
+  primaryButton: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing[16],
+  },
+  primaryButtonText: {
+    color: theme.colors.white,
+    fontFamily: theme.fonts.body,
+    fontSize: theme.fontSizes[16],
+  },
+  secondaryButton: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.overlay,
+    paddingHorizontal: theme.spacing[16],
+  },
+  secondaryButtonText: {
+    color: theme.colors.foreground,
+    fontFamily: theme.fonts.body,
+    fontSize: theme.fontSizes[16],
+  },
 }))

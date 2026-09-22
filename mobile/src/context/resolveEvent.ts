@@ -1,36 +1,22 @@
-import { AppContext, EventAppContext } from '../types/app'
+import type { EventAppContext } from '../types/app'
+import { DEMO_TENANT_ID } from '../types/app'
 
+/** Compatibility-only input for the retired event adapter. */
 export interface EventContextInput {
-  eventId: string
+  eventId?: string
   tenantId?: string
   companyId?: string
 }
-
-export const DEMO_EVENT: Readonly<EventAppContext> = {
+export const DEMO_EVENT: EventAppContext = {
   mode: 'event',
+  tenantId: DEMO_TENANT_ID,
   eventId: 'aikuaa-demo-event',
-  tenantId: 'aikuaa-demo-tenant',
   companyId: 'aikuaa-demo-company',
 }
 
-/**
- * Resolves the demo event context for the app shell.
- *
- * When no input is provided, the hardcoded demo event is returned so the app
- * works fully offline without a backend.
- *
- * When an input is provided (e.g. from a future deep-link / QR scan), it is
- * injected into the same context shape without requiring architecture changes.
- */
-export const resolveEventContext = (input?: EventContextInput): AppContext => {
-  if (input?.eventId) {
-    return {
-      mode: 'event',
-      eventId: input.eventId,
-      tenantId: input.tenantId,
-      companyId: input.companyId,
-    }
-  }
-
-  return DEMO_EVENT
+/** @deprecated Event contexts are not accepted by the operational AppContext. */
+export function resolveEventContext(input: EventContextInput = {}): EventAppContext {
+  const eventId = input.eventId?.trim() || DEMO_EVENT.eventId
+  if (!eventId) throw new Error('Event context requires a valid eventId.')
+  return { ...DEMO_EVENT, ...input, mode: 'event', eventId }
 }

@@ -1,6 +1,5 @@
-import React from 'react'
-import { ChatScreen } from '@/features/chat/components'
+import { Redirect } from 'expo-router'
 
-export default function ChatRoute() {
-  return <ChatScreen />
+export default function ChatCompatibilityRoute() {
+  return <Redirect href="/(app)/(tabs)/assistant" />
 }
